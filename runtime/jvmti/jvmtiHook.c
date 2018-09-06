@@ -1145,6 +1145,7 @@ findWatchedField(J9VMThread *currentThread, J9JVMTIEnv * j9env, UDATA isWrite, U
 		J9Class *declaringClass = NULL;
 		J9JVMTIWatchedClass *watchedClass = NULL;
 		UDATA index = findFieldIndexFromOffset(currentThread, fieldClass, tag, isStatic, &declaringClass);
+		omrthread_rwmutex_enter_read(j9env->watchMutex);
 		watchedClass = hashTableFind(j9env->watchedClasses, &declaringClass);
 		if (NULL != watchedClass) {
 			UDATA *watchBits = (UDATA*)&watchedClass->watchBits;
@@ -1167,6 +1168,7 @@ findWatchedField(J9VMThread *currentThread, J9JVMTIEnv * j9env, UDATA isWrite, U
 				Assert_JVMTI_notNull(result);
 			}
 		}
+		omrthread_rwmutex_exit_read(j9env->watchMutex);
 	}
 	return result;
 }
@@ -2376,6 +2378,7 @@ jvmtiHookCheckForDataBreakpoint(J9HookInterface** hook, UDATA eventNum, void* ev
 		/* CMVC 196966: only inspect live (not disposed) environments */
 		if (0 == (j9env->flags & J9JVMTIENV_FLAG_DISPOSED)) {
 			J9HashTableState walkState;
+			omrthread_rwmutex_enter_read(j9env->watchMutex);
 			J9JVMTIWatchedClass *watchedClass = hashTableStartDo(j9env->watchedClasses, &walkState);
 			while (NULL != watchedClass) {
 				J9Class *clazz = watchedClass->clazz;
@@ -2434,6 +2437,7 @@ jvmtiHookCheckForDataBreakpoint(J9HookInterface** hook, UDATA eventNum, void* ev
 				}
 				watchedClass = hashTableNextDo(&walkState);
 			}
+			omrthread_rwmutex_exit_read(j9env->watchMutex);
 		}
 		j9env = pool_nextDo(&envPoolState);
 	}
@@ -3157,6 +3161,7 @@ static void
 removeUnloadedFieldWatches(J9JVMTIEnv * j9env, J9Class * unloadedClass)
 {
 	J9HashTableState walkState;
+	/* Exclusive held - no mutex required to access the hash table */
 	J9JVMTIWatchedClass *watchedClass = hashTableStartDo(j9env->watchedClasses, &walkState);
 	while (NULL != watchedClass) {
 		if (unloadedClass == watchedClass->clazz) {

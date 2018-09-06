@@ -990,6 +990,7 @@ fixWatchedFields(J9JavaVM *vm, J9HashTable *classHashTable)
 			/* CMVC 196966: only inspect live (not disposed) environments */
 			if (0 == (j9env->flags & J9JVMTIENV_FLAG_DISPOSED)) {
 				J9HashTableState walkState;
+				/* Exclusive held - no mutex required to access the hash table */
 				J9JVMTIWatchedClass *watchedClass = hashTableStartDo(j9env->watchedClasses, &walkState);
 				while (NULL != watchedClass) {
 					J9JVMTIClassPair exemplar;

@@ -366,6 +366,11 @@ disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData)
 			j9env->watchedClasses = NULL;
 		}
 
+		if (NULL != j9env->watchMutex) {
+			omrthread_rwmutex_destroy(j9env->watchMutex);
+			j9env->watchMutex = NULL;
+		}
+
 		if (NULL != j9env->breakpoints) {
 			pool_kill(j9env->breakpoints);
 			j9env->breakpoints = NULL;
@@ -463,6 +468,9 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			}
 			j9env->watchedClasses = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIWatchedClass), sizeof(UDATA), 0,  J9MEM_CATEGORY_JVMTI, watchedClassHash, watchedClassEqual, NULL, NULL);
 			if (j9env->watchedClasses == NULL) {
+				goto fail;
+			}
+			if (J9THREAD_RWMUTEX_OK != omrthread_rwmutex_init(&j9env->watchMutex, 0, "JVMTI field watch mutex")) {
 				goto fail;
 			}
 			j9env->breakpoints = pool_new(sizeof(J9JVMTIAgentBreakpoint), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary));

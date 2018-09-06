@@ -25,7 +25,27 @@
 
 static jvmtiError setFieldWatch (jvmtiEnv* env, jclass klass, jfieldID field, UDATA isModification);
 static jvmtiError clearFieldWatch (jvmtiEnv* env, jclass klass, jfieldID field, UDATA isModification);
+static UDATA exclusiveRequired(J9JavaVM *vm);
 
+static UDATA
+exclusiveRequired(J9JavaVM *vm)
+{
+	UDATA rc = FALSE;
+	J9JITConfig *jitConfig = vm->jitConfig;
+	/* If not running the JIT, exclusive not required */
+	if (NULL != jitConfig) {
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES)) {
+			if (!jitConfig->inlineFieldWatches) {
+				/* Inline watch mode, first watch requires exclusive */
+				rc = TRUE;
+			}
+		} else {
+			/* Not running in inline watch mode, exclusive required */
+			rc = TRUE;
+		}
+	}
+	return rc;
+}
 
 jvmtiError JNICALL
 jvmtiSetFieldAccessWatch(jvmtiEnv* env,
@@ -123,15 +143,25 @@ setFieldWatch(jvmtiEnv* env,
 		UDATA *watchBits = NULL;
 		UDATA watchBit = 0;
 		J9JVMTIWatchedClass *watchedClass = NULL;
+		UDATA needsExclusive = exclusiveRequired(vm);
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_JCLASS_NON_NULL(klass);
 		ENSURE_JFIELDID_NON_NULL(field);
 
-		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
-
 		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
+		/* If class bits are possibly going to be updated, exlusive is required */
+		if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassHasWatchedFields)) {
+			needsExclusive = TRUE;
+		}
+
+		if (needsExclusive) {
+			vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
+		} else {
+			omrthread_rwmutex_enter_write(j9env->watchMutex);
+		}
+
 		fieldID = (J9JNIFieldID*)field;
 		localFieldIndex = fieldID->index - fieldID->declaringClass->romClass->romMethodCount;
 		fieldCount = clazz->romClass->romFieldCount;
@@ -198,7 +228,11 @@ setFieldWatch(jvmtiEnv* env,
 			}
 		}
 
-		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
+		if (needsExclusive) {
+			vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
+		} else {
+			omrthread_rwmutex_exit_write(j9env->watchMutex);
+		}
 
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
@@ -227,13 +261,18 @@ clearFieldWatch(jvmtiEnv* env,
 		UDATA *watchBits = NULL;
 		UDATA watchBit = 0;
 		J9JVMTIWatchedClass *watchedClass = NULL;
+		UDATA needsExclusive = exclusiveRequired(vm);
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_JCLASS_NON_NULL(klass);
 		ENSURE_JFIELDID_NON_NULL(field);
 
-		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
+		if (needsExclusive) {
+			vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
+		} else {
+			omrthread_rwmutex_enter_write(j9env->watchMutex);
+		}
 
 		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
 		fieldID = (J9JNIFieldID*)field;
@@ -263,12 +302,17 @@ clearFieldWatch(jvmtiEnv* env,
 				}
 				/* Consider checking for no remaining watches on the class
 				 * and removing the watched fields bit from the class (and
-				 * subclasses) and removing the hash table entry.
+				 * subclasses) and removing the hash table entry. Currently
+				 * would require exclusive.
 				 */
 			}
 		}
 
-		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
+		if (needsExclusive) {
+			vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
+		} else {
+			omrthread_rwmutex_exit_write(j9env->watchMutex);
+		}
 
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);

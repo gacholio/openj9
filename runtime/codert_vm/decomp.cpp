@@ -1354,7 +1354,7 @@ jitDataBreakpointAdded(J9VMThread * currentThread)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9JITConfig *jitConfig = vm->jitConfig;
 
-	/* We have exclusive */
+	/* We have exclusive or write access to the field mutex */
 
 	Trc_Decomp_jitDataBreakpointAdded_Entry(currentThread);
 
@@ -1403,7 +1403,7 @@ jitDataBreakpointRemoved(J9VMThread * currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 
-	/* We have exclusive */
+	/* We have exclusive or write access to the field mutex */
 
 	Trc_Decomp_jitDataBreakpointRemoved_Entry(currentThread);
 

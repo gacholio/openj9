@@ -162,6 +162,7 @@ typedef struct J9JVMTIEnv {
 	J9HashTable* objectTagTable;
 	J9JVMTIEventEnableMap globalEventEnable;
 	J9HashTable *watchedClasses;
+	omrthread_rwmutex_t watchMutex;
 	J9Pool* breakpoints;
 	omrthread_tls_key_t tlsKey;
 	J9JVMTIHookInterfaceWithID vmHook;
