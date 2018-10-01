@@ -1611,7 +1611,7 @@ createMethodMetaData(
       if (vm->isAnonymousClass( (TR_OpaqueClassBlock*) ((TR_ResolvedJ9Method*)vmMethod)->constantPoolHdr()))
          {
          J9Class *j9clazz = ((TR_ResolvedJ9Method*)vmMethod)->constantPoolHdr();
-         J9CLASS_EXTENDED_FLAGS_SET(j9clazz, J9ClassContainsJittedMethods);
+         VM_AtomicSupport::bitOr(j9clazz, J9ClassContainsJittedMethods);
          data->prevMethod = NULL;
          data->nextMethod = j9clazz->jitMetaDataList;
          if (j9clazz->jitMetaDataList)

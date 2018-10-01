@@ -183,7 +183,7 @@ setFieldWatch(jvmtiEnv* env,
 					J9SubclassWalkState subclassState;
 					J9Class *subclass = allSubclassesStartDo(clazz, &subclassState, TRUE);
 					while (NULL != subclass) {
-						subclass->classFlags |= J9ClassHasWatchedFields;
+						VM_AtomicSupport::bitOr(subclass->classFlags, J9ClassHasWatchedFields);
 						subclass = allSubclassesNextDo(&subclassState);
 					}
 				}

@@ -791,7 +791,7 @@ sendInit(J9VMThread *currentThread, j9object_t object, J9Class *senderClass, UDA
 						} else if (javaBaseLoaded) {
 							/* remember that this class is not accessible to all. We can only set this
 							 * after the module system is ready as there is no way of knowing before hand.*/
-							clazz->classFlags |= J9ClassDoNotAttemptToSetInitCache;
+							VM_AtomicSupport::bitOr(clazz->classFlags, J9ClassDoNotAttemptToSetInitCache);
 						}
 					}
 				}

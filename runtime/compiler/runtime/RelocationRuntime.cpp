@@ -562,7 +562,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
          J9Class *j9clazz = ramCP()->ramClass;
          if (fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))
             {
-            J9CLASS_EXTENDED_FLAGS_SET(j9clazz, J9ClassContainsJittedMethods);
+        	 VM_AtomicSupport::bitOr(j9clazz, J9ClassContainsJittedMethods);
             _exceptionTable->prevMethod = NULL;
             _exceptionTable->nextMethod = j9clazz->jitMetaDataList;
             if (j9clazz->jitMetaDataList)

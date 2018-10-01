@@ -3049,7 +3049,7 @@ void jitMethodBreakpointed(J9VMThread * vmThread, J9Method *j9method)
 void jitIllegalFinalFieldModification(J9VMThread *currentThread, J9Class *fieldClass)
    {
    // Set the bit so that VM doesn't report the modification next time
-   fieldClass->classFlags |= J9ClassHasIllegalFinalFieldModifications;
+   VM_AtomicSupport::bitOr(fieldClass->classFlags, J9ClassHasIllegalFinalFieldModifications);
 
    J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
    TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, currentThread);
@@ -4111,7 +4111,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
                {
                classInfo->setReservable();
                if (!TR::Options::_aggressiveLockReservation)
-                  J9CLASS_EXTENDED_FLAGS_SET(cl, J9ClassReservableLockWordInit);
+            	   VM_AtomicSupport::bitOr(cl, J9ClassReservableLockWordInit);
                }
             }
          }
