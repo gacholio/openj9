@@ -564,7 +564,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
          J9Class *j9clazz = ramCP()->ramClass;
          if (fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))
             {
-        	 VM_AtomicSupport::bitOr(j9clazz, J9ClassContainsJittedMethods);
+        	 VM_AtomicSupport::bitOrU32(&j9clazz->classFlags, J9ClassContainsJittedMethods);
             _exceptionTable->prevMethod = NULL;
             _exceptionTable->nextMethod = j9clazz->jitMetaDataList;
             if (j9clazz->jitMetaDataList)
@@ -574,7 +574,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
          else
             {
             J9ClassLoader * classLoader = j9clazz->classLoader;
-            VM_AtomicSupport::bitOr(classLoader->flags, J9CLASSLOADER_CONTAINS_JITTED_METHODS);
+            VM_AtomicSupport::bitOr(&classLoader->flags, J9CLASSLOADER_CONTAINS_JITTED_METHODS);
             _exceptionTable->prevMethod = NULL;
             _exceptionTable->nextMethod = classLoader->jitMetaDataList;
             if (classLoader->jitMetaDataList)

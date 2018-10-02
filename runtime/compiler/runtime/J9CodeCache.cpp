@@ -296,9 +296,9 @@ J9::CodeCache::onClassRedefinition(TR_OpaqueMethodBlock *oldMethod, TR_OpaqueMet
       // Test for anonymous class
       J9Class *j9clazz = J9_CLASS_FROM_METHOD((J9Method *)newMethod);
       if (_manager->fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))
-    	  VM_AtomicSupport::bitOr(j9clazz->classFlags, J9ClassContainsMethodsPresentInMCCHash);
+    	  VM_AtomicSupport::bitOrU32(&j9clazz->classFlags, J9ClassContainsMethodsPresentInMCCHash);
       else
-    	  VM_AtomicSupport::bitOr(j9clazz->classLoader->flags, J9CLASSLOADER_CONTAINS_METHODS_PRESENT_IN_MCC_HASH);
+    	  VM_AtomicSupport::bitOr(&j9clazz->classLoader->flags, J9CLASSLOADER_CONTAINS_METHODS_PRESENT_IN_MCC_HASH);
       }
    }
 
@@ -329,9 +329,9 @@ J9::CodeCache::addUnresolvedMethod(void *constPool, int32_t constPoolIndex)
       // Test for anonymous class
       J9Class *j9clazz = J9_CLASS_FROM_CP(constPool);
       if (_manager->fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))
-    	  VM_AtomicSupport::bitOr(j9clazz->classFlags, J9ClassContainsMethodsPresentInMCCHash);
+    	  VM_AtomicSupport::bitOrU32(&j9clazz->classFlags, J9ClassContainsMethodsPresentInMCCHash);
       else
-    	  VM_AtomicSupport::bitOr(j9clazz->classLoader->flags, J9CLASSLOADER_CONTAINS_METHODS_PRESENT_IN_MCC_HASH);
+    	  VM_AtomicSupport::bitOr(&j9clazz->classLoader->flags, J9CLASSLOADER_CONTAINS_METHODS_PRESENT_IN_MCC_HASH);
       }
 
    return true;
@@ -350,9 +350,9 @@ J9::CodeCache::addResolvedMethod(TR_OpaqueMethodBlock *method)
       // Test for anonymous class
       J9Class *j9clazz = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
       if (_manager->fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))
-    	  VM_AtomicSupport::bitOr(j9clazz->classFlags, J9ClassContainsMethodsPresentInMCCHash);
+    	  VM_AtomicSupport::bitOrU32(&j9clazz->classFlags, J9ClassContainsMethodsPresentInMCCHash);
       else
-    	  VM_AtomicSupport::bitOr(j9clazz->classLoader->flags, J9CLASSLOADER_CONTAINS_METHODS_PRESENT_IN_MCC_HASH);
+    	  VM_AtomicSupport::bitOr(&j9clazz->classLoader->flags, J9CLASSLOADER_CONTAINS_METHODS_PRESENT_IN_MCC_HASH);
       }
 
    return true;
@@ -385,9 +385,9 @@ J9::CodeCache::resolveHashEntry(OMR::CodeCacheHashEntry *entry, TR_OpaqueMethodB
       // Test for anonymous class
       J9Class *j9clazz = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
      if (_manager->fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))
-    	 VM_AtomicSupport::bitOr(j9clazz->classFlags, J9ClassContainsMethodsPresentInMCCHash);
+    	 VM_AtomicSupport::bitOrU32(&j9clazz->classFlags, J9ClassContainsMethodsPresentInMCCHash);
       else
-         j9clazz->classLoader->flags, J9CLASSLOADER_CONTAINS_METHODS_PRESENT_IN_MCC_HASH);
+    	  VM_AtomicSupport::bitOr(&j9clazz->classLoader->flags, J9CLASSLOADER_CONTAINS_METHODS_PRESENT_IN_MCC_HASH);
       }
    }
 

@@ -1613,7 +1613,7 @@ createMethodMetaData(
       if (vm->isAnonymousClass( (TR_OpaqueClassBlock*) ((TR_ResolvedJ9Method*)vmMethod)->constantPoolHdr()))
          {
          J9Class *j9clazz = ((TR_ResolvedJ9Method*)vmMethod)->constantPoolHdr();
-         VM_AtomicSupport::bitOr(j9clazz, J9ClassContainsJittedMethods);
+         VM_AtomicSupport::bitOrU32(&j9clazz->classFlags, J9ClassContainsJittedMethods);
          data->prevMethod = NULL;
          data->nextMethod = j9clazz->jitMetaDataList;
          if (j9clazz->jitMetaDataList)
@@ -1623,7 +1623,7 @@ createMethodMetaData(
       else
          {
          J9ClassLoader * classLoader = ((TR_ResolvedJ9Method*)vmMethod)->getClassLoader();
-         VM_AtomicSupport::bitOr(classLoader->flags, J9CLASSLOADER_CONTAINS_JITTED_METHODS);
+         VM_AtomicSupport::bitOr(&classLoader->flags, J9CLASSLOADER_CONTAINS_JITTED_METHODS);
          data->prevMethod = NULL;
          data->nextMethod = classLoader->jitMetaDataList;
          if (classLoader->jitMetaDataList)
