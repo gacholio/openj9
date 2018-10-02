@@ -572,7 +572,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
          else
             {
             J9ClassLoader * classLoader = j9clazz->classLoader;
-            classLoader->flags |= J9CLASSLOADER_CONTAINS_JITTED_METHODS;
+            VM_AtomicSupport::bitOr(classLoader->flags, J9CLASSLOADER_CONTAINS_JITTED_METHODS);
             _exceptionTable->prevMethod = NULL;
             _exceptionTable->nextMethod = classLoader->jitMetaDataList;
             if (classLoader->jitMetaDataList)

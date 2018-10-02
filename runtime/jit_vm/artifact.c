@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,8 @@ UDATA jit_artifact_remove(J9PortLibrary * portLibrary, J9AVLTree * tree, J9JITEx
 	return (UDATA) hash_jit_artifact_remove(portLibrary, foundTable, dataToDelete);
 }
 
-J9JITHashTable *jit_artifact_add_code_cache(J9PortLibrary * portLibrary, J9AVLTree * tree, J9MemorySegment * cacheToInsert, J9JITHashTable *optionalHashTable)
+static J9JITHashTable *
+jit_artifact_add_code_cache(J9PortLibrary * portLibrary, J9AVLTree * tree, J9MemorySegment * cacheToInsert, J9JITHashTable *optionalHashTable)
 {
 	if(optionalHashTable) {
 		avl_insert(tree, (J9AVLTreeNode *) optionalHashTable);

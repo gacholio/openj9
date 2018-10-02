@@ -95,7 +95,6 @@ extern J9_CFUNC void jitPrintRegisterMapArray (J9StackWalkState * walkState, cha
 #endif /* J9VM_INTERP_STACKWALK_TRACING (autogen) */
 
 
-extern J9_CFUNC J9JITHashTable *jit_artifact_add_code_cache (J9PortLibrary * portLibrary, J9AVLTree * tree, J9MemorySegment * cacheToInsert, J9JITHashTable *optionalHashTable);
 extern J9_CFUNC UDATA jit_artifact_insert (J9PortLibrary * portLibrary, J9AVLTree * tree, J9JITExceptionTable * dataToInsert);
 extern J9_CFUNC J9JITHashTable *
 jit_artifact_protected_add_code_cache (J9JavaVM * vm, J9AVLTree * tree, J9MemorySegment * cacheToInsert, J9JITHashTable *optionalHashTable);
