@@ -53,6 +53,8 @@
 #include "env/IO.hpp"
 #include "runtime/HookHelpers.hpp"
 
+#include "AtomicSupport.hpp"
+
 
 /*
  *  *  Debugging help

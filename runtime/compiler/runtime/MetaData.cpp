@@ -69,6 +69,8 @@
 #include "control/CompilationRuntime.hpp"
 #include "runtime/HWProfiler.hpp"
 
+#include "AtomicSupport.hpp"
+
 TR_MetaDataStats metaDataStats;
 
 typedef std::set<TR_GCStackMap*, std::less<TR_GCStackMap*>, TR::typed_allocator<TR_GCStackMap*, TR::Region&>> GCStackMapSet;

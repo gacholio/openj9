@@ -77,6 +77,8 @@
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
 
+#include "AtomicSupport.hpp"
+
 extern "C" {
 struct J9JavaVM;
 }

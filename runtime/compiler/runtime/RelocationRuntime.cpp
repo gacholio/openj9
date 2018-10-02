@@ -73,6 +73,8 @@
 #include "compile/ResolvedMethod.hpp"
 #include "control/CompilationRuntime.hpp"
 
+#include "AtomicSupport.hpp"
+
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
    {
    _method = NULL;
