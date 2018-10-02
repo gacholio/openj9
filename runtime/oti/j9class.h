@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corp. and others
+ * Copyright (c) 2011, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,8 @@ typedef struct J9ClassLoadingConstraint {
 #define J9CLASS_FLAGS(clazz) ((UDATA)(clazz)->classDepthAndFlags)
 #define J9CLASS_DEPTH(clazz) (((UDATA)(clazz)->classDepthAndFlags) & J9_JAVA_CLASS_DEPTH_MASK)
 #define J9CLASS_EXTENDED_FLAGS(clazz) ((clazz)->classFlags)
+
+/* Only use these macros while holding exclusive VM access */
 #define J9CLASS_EXTENDED_FLAGS_SET(clazz, bits) ((clazz)->classFlags |= (bits))
 #define J9CLASS_EXTENDED_FLAGS_CLEAR(clazz, bits) ((clazz)->classFlags &= ~(bits))
 
