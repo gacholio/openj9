@@ -104,6 +104,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 
 	element = vm->memoryManagerFunctions->J9AllocateObject(
 		vmThread, userData->elementClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	userData->elementClass = J9_CURRENT_CLASS(userData->elementClass);
 	if (element == NULL) {
 		rc = FALSE;
 		vmfns->setHeapOutOfMemoryError(vmThread);

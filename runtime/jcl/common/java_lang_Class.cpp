@@ -584,6 +584,7 @@ oom:
 				if (NULL == element) {
 					goto oom;
 				}
+				clazz = J9_CURRENT_CLASS(clazz);
 				J9JAVAARRAYOFOBJECT_STORE(currentThread, resultObject, i, element);
 			}
 		}

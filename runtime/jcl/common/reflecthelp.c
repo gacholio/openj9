@@ -765,6 +765,7 @@ createField(struct J9VMThread *vmThread, jfieldID fieldID)
 		if (vmThread->currentException != NULL) {
 			return NULL;
 		}
+		jlrFieldClass = J9_CURRENT_CLASS(jlrFieldClass);
 	}
 
 	fieldObject = vmThread->javaVM->memoryManagerFunctions->J9AllocateObject(vmThread, jlrFieldClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
@@ -857,6 +858,7 @@ createMethod(struct J9VMThread *vmThread, J9JNIMethodID *methodID, j9object_t pa
 			DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* parameterTypes */
 			return NULL;
 		}
+		jlrMethodClass = J9_CURRENT_CLASS(jlrMethodClass);
 	}
 
 	/* allocate a method object */
@@ -901,6 +903,7 @@ createConstructor(struct J9VMThread *vmThread, J9JNIMethodID *methodID, j9object
 		if (vmThread->currentException != NULL) {
 			return NULL;
 		}
+		jlrConstructorClass = J9_CURRENT_CLASS(jlrConstructorClass);
 	}
 
 	constructorObject = vmThread->javaVM->memoryManagerFunctions->J9AllocateObject(vmThread, jlrConstructorClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);

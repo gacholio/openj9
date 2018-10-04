@@ -78,6 +78,7 @@ Fast_java_lang_J9VMInternals_primitiveClone(J9VMThread *currentThread, j9object_
 				setHeapOutOfMemoryError(currentThread);
 				goto done;
 			}
+			objectClass = J9_CURRENT_CLASS(objectClass);
 		}
 		objectAccessBarrier.cloneArray(currentThread, original, copy, objectClass, size);
 	} else {
@@ -90,6 +91,7 @@ Fast_java_lang_J9VMInternals_primitiveClone(J9VMThread *currentThread, j9object_
 				setHeapOutOfMemoryError(currentThread);
 				goto done;
 			}
+			objectClass = J9_CURRENT_CLASS(objectClass);
 		}
 		objectAccessBarrier.cloneObject(currentThread, original, copy, objectClass);
 		VM_VMHelpers::checkIfFinalizeObject(currentThread, copy);

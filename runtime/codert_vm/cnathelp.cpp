@@ -484,6 +484,7 @@ slow_jitNewObjectImpl(J9VMThread *currentThread, bool checkClassInit, bool nonZe
 			if (NULL != addr) {
 				goto done;
 			}
+			objectClass = J9_CURRENT_CLASS(objectClass);
 		}
 	}
 	buildJITResolveFrameWithPC(currentThread, J9_STACK_FLAGS_JIT_ALLOCATION_RESOLVE | J9_SSF_JIT_RESOLVE, parmCount, true, 0, oldPC);

@@ -1022,19 +1022,20 @@ obj:;
 	 * If inline allocation fails, the out of line allocator will be called.
 	 * This function assumes that the stack and live values are in a valid state for GC.
 	 *
-	 * @param j9clazz[in] the non-indexable J9Class to instantiate
+	 * @param j9clazz[in/out] the non-indexable J9Class to instantiate (will be updated if HCR occurs)
 	 * @param initializeSlots[in] whether or not to initialize the slots (default true)
 	 * @param memoryBarrier[in] whether or not to issue a write barrier (default true)
 	 *
 	 * @returns the new object, or NULL if allocation failed
 	 */
 	VMINLINE j9object_t
-	allocateObject(REGISTER_ARGS_LIST, J9Class *clazz, bool initializeSlots = true, bool memoryBarrier = true)
+	allocateObject(REGISTER_ARGS_LIST, J9Class* &clazz, bool initializeSlots = true, bool memoryBarrier = true)
 	{
 		j9object_t instance = _objectAllocate.inlineAllocateObject(_currentThread, clazz, initializeSlots, memoryBarrier);
 		if (NULL == instance) {
 			updateVMStruct(REGISTER_ARGS);
 			instance = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, clazz, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			clazz = VM_VMHelpers::currentClass(clazz);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 		}
 		return instance;

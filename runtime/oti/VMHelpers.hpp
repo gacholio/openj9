@@ -745,18 +745,19 @@ done:
 	 *
 	 * @param currentThread[in] the current J9VMThread
 	 * @param objectAllocate[in] instance of MM_ObjectAllocationAPI created on the current thread
-	 * @param j9clazz[in] the non-indexable J9Class to instantiate
+	 * @param j9clazz[in/out] the non-indexable J9Class to instantiate (will be updated if HCR occurs)
 	 * @param initializeSlots[in] whether or not to initialize the slots (default true)
 	 * @param memoryBarrier[in] whether or not to issue a write barrier (default true)
 	 *
 	 * @returns the new object, or NULL if allocation failed
 	 */
 	static VMINLINE j9object_t
-	allocateObject(J9VMThread *currentThread, MM_ObjectAllocationAPI *objectAllocate, J9Class *clazz, bool initializeSlots = true, bool memoryBarrier = true)
+	allocateObject(J9VMThread *currentThread, MM_ObjectAllocationAPI *objectAllocate, J9Class* &clazz, bool initializeSlots = true, bool memoryBarrier = true)
 	{
 		j9object_t instance = objectAllocate->inlineAllocateObject(currentThread, clazz, initializeSlots, memoryBarrier);
 		if (NULL == instance) {
 			instance = currentThread->javaVM->memoryManagerFunctions->J9AllocateObject(currentThread, clazz, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			clazz = currentClass(clazz);
 			if (J9_UNEXPECTED(NULL == instance)) {
 				setHeapOutOfMemoryError(currentThread);
 			}

@@ -653,6 +653,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 		if (NULL == classObj) {
 			return 1;
 		}
+		lockClass = J9_CURRENT_CLASS(lockClass);
 		J9VMJAVALANGCLASS_SET_VMREF(vmThread, classObj, clazz);
 		clazz->classObject = classObj;
 		lockObject = gcFuncs->J9AllocateObject(vmThread, lockClass, allocateFlags);
@@ -660,6 +661,8 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 		if (lockObject == NULL) {
 			return 1;
 		}
+		classClass = J9_CURRENT_CLASS(classClass);
+		lockClass = J9_CURRENT_CLASS(lockClass);
 		J9VMJAVALANGJ9VMINTERNALSCLASSINITIALIZATIONLOCK_SET_THECLASS(vmThread, lockObject, (j9object_t)classObj);
 		J9VMJAVALANGCLASS_SET_INITIALIZATIONLOCK(vmThread, (j9object_t)classObj, lockObject);
 	} while ((clazz = vmFuncs->allClassesNextDo(&state)) != NULL);

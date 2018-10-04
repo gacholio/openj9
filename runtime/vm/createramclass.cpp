@@ -1984,7 +1984,6 @@ fail:
 		J9Class *jlClass = J9VMCONSTANTPOOL_CLASSREF_AT(javaVM, J9VMCONSTANTPOOL_JAVALANGCLASS)->value;
 
 		if (jlClass != NULL) {
-			J9Class * lockClass = J9VMJAVALANGJ9VMINTERNALSCLASSINITIALIZATIONLOCK_OR_NULL(javaVM);
 			/* Note: in RTJ, tenured implies immortal. Classes must be in the immortal space so we must set the tenured flag. */
 			state->classObject = javaVM->memoryManagerFunctions->J9AllocateObject(vmThread, jlClass, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE | J9_GC_ALLOCATE_OBJECT_HASHED);
 			if (state->classObject == NULL) {
@@ -1994,6 +1993,7 @@ fail:
 			}
 
 			/* If the lock class is not yet loaded, skip allocating the instance - will be fixed up once the class is loaded */
+			J9Class * lockClass = J9VMJAVALANGJ9VMINTERNALSCLASSINITIALIZATIONLOCK_OR_NULL(javaVM);
 			if (lockClass != NULL) {
 				j9object_t lockObject;
 				UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;

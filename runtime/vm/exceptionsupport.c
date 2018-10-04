@@ -682,7 +682,7 @@ sendConstructor:
 	/* Look up and call the exception constructor */
 
 	*((j9object_t*) (currentThread->sp)) = exception;
-	internalSendExceptionConstructor(currentThread, exceptionClass, exception, (j9object_t) detailMessage, constructorIndex);
+	internalSendExceptionConstructor(currentThread, J9OBJECT_CLAZZ(currentThread, exception), exception, (j9object_t) detailMessage, constructorIndex);
 	currentThread->privateFlags &= ~J9_PRIVATE_FLAGS_FILL_EXISTING_TRACE;
 	exception = POP_OBJECT_IN_SPECIAL_FRAME(currentThread); /* preservedMessage */
 

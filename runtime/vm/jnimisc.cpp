@@ -331,6 +331,7 @@ allocObject(JNIEnv *env, jclass clazz)
 			if (VM_VMHelpers::exceptionPending(currentThread)) {
 				goto done;
 			}
+			j9clazz = J9_CURRENT_CLASS(j9clazz);
 		}
 		resultObject = currentThread->javaVM->memoryManagerFunctions->J9AllocateObject(currentThread, j9clazz, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
 		if (NULL == resultObject) {
