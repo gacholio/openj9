@@ -22,8 +22,10 @@
 #include <string.h>
 #include "jvmti.h"
 
+static int reportHook = 0;
+
 void JNICALL
-ClassFileLoadHook(jvmtiEnv *jvmti_env,
+classFileLoadHook(jvmtiEnv *jvmti_env,
             JNIEnv* jni_env,
             jclass class_being_redefined,
             jobject loader,
@@ -34,10 +36,13 @@ ClassFileLoadHook(jvmtiEnv *jvmti_env,
             jint* new_class_data_len,
             unsigned char** new_class_data)
 {
+	if (reportHook) {
+		printf("classFileLoadHook: %s\n", name ? name : "<NULL>");
+	}
 }
 
 void JNICALL
-ClassLoad(jvmtiEnv *jvmti_env,
+classLoad(jvmtiEnv *jvmti_env,
             JNIEnv* jni_env,
             jthread thread,
             jclass klass)
@@ -95,7 +100,7 @@ Agent_Prepare(JavaVM * vm, char *phase, char * options, void * reserved)
 		options = "";
 	}
 
-	rc = (*vm)->GetEnv(vm, (void **) &jvmti_env, JVMTI_VERSION_9_0);
+	rc = (*vm)->GetEnv(vm, (void **) &jvmti_env, JVMTI_VERSION_1_2);
 	if (rc != JNI_OK) {
 		if ((rc != JNI_EVERSION) || ((rc = (*vm)->GetEnv(vm, (void **) &jvmti_env, JVMTI_VERSION_1_2)) != JNI_OK)) {
 			error(env, err, "Failed to GetEnv %d\n", rc);
