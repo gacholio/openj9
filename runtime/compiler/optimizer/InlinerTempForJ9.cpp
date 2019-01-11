@@ -500,7 +500,7 @@ TR_J9InlinerPolicy::createUnsafeAddressWithOffset(TR::Node * unsafeCall)
       return TR::Node::create(TR::aladd, 2, unsafeCall->getChild(1), TR::Node::create(TR::land, 2, unsafeCall->getChild(2), constNode));
       }
 
-   return TR::Node::create(TR::aiadd, 2, unsafeCall->getChild(1), TR::Node::create(TR::iand, 2, TR::Node::create(TR::l2i, 1, unsafeCall->getChild(2)), TR::Node::iconst(unsafeCall, ~(J9_SUN_FIELD_OFFSET_MASK))));
+   return TR::Node::create(TR::aiadd, 2, unsafeCall->getChild(1), TR::Node::create(TR::iand, 2, TR::Node::create(TR::l2i, 1, unsafeCall->getChild(2)), TR::Node::iconst(unsafeCall, ~((int32_t)J9_SUN_FIELD_OFFSET_MASK))));
    }
 
 void
@@ -631,9 +631,9 @@ TR_J9InlinerPolicy::genClassCheckForUnsafeGetPut(TR::Node* offset, bool isNotLow
    TR::Node *lowTag = NULL;
 
    if (isILoad)
-      lowTag = TR::Node::create(TR::iand, 2, offset, TR::Node::iconst(1)); 
+      lowTag = TR::Node::create(TR::iand, 2, offset, TR::Node::iconst((int32_t)J9_SUN_STATIC_FIELD_OFFSET_TAG)); 
    else
-      lowTag = TR::Node::create(TR::land, 2, offset, TR::Node::lconst(1));
+      lowTag = TR::Node::create(TR::land, 2, offset, TR::Node::lconst(J9_SUN_STATIC_FIELD_OFFSET_TAG));
 
    TR::ILOpCodes op = isNotLowTagged ? (isILoad ? TR::ificmpne : TR::iflcmpne) : (isILoad ?  TR::ificmpeq : TR::iflcmpeq);
    // Create the if to check if an extra level of indirection is needed
@@ -654,9 +654,9 @@ TR_J9InlinerPolicy::genClassCheckForUnsafeGetPut(TR::Node* offset)
       TR::Node::create(isILoad ? TR::iand : TR::land, 2, offset,
                       TR::Node::create(offset, isILoad ? TR::iconst : TR::lconst, 0, 0));
    if (isILoad)
-      lowTag->getSecondChild()->setInt(1);
+      lowTag->getSecondChild()->setInt(J9_SUN_STATIC_FIELD_OFFSET_TAG);
    else
-      lowTag->getSecondChild()->setLongInt(1);
+      lowTag->getSecondChild()->setLongInt(J9_SUN_STATIC_FIELD_OFFSET_TAG);
 
    // Create the if to check if an extra level of indirection is needed
    TR::Node *cmp = TR::Node::createif(isILoad ? TR::ificmpne : TR::iflcmpne,

@@ -712,7 +712,7 @@ int32_t TR_UnsafeFastPath::perform()
                // The offset for a static field is low taged, mask out the last bit to get the real offset
                TR::Node *newOffset =
                   TR::Node::create(offset, TR::land, 2, offset,
-                                  TR::Node::lconst(offset, ~1));
+                                  TR::Node::lconst(offset, ~J9_SUN_FIELD_OFFSET_MASK));
                node->setAndIncChild(offsetChild, newOffset);
                offset->recursivelyDecReferenceCount();
                }
