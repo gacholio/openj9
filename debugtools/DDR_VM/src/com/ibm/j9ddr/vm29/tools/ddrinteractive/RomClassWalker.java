@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -356,6 +356,23 @@ public class RomClassWalker extends ClassWalker {
 
 		return fieldLength;
 	}
+
+	private void allSlotsInMethodRemapDo(U16Pointer methodRemap) throws CorruptDataException
+	{
+		if (methodRemap.isNull()) {
+			return;
+		}
+
+		int romMethodCount = romClass.romMethodCount().intValue();
+		U16Pointer remap = U16Pointer.cast(methodRemap);
+
+		for (int i = 0; i < romMethodCount; ++i) {
+			classWalkerCallback.addSlot(romClass, SlotType.J9_U16, remap, "methodRemapIndex");
+			remap = remap.add(1);
+		}
+		classWalkerCallback.addSection(romClass, methodRemap, U16.SIZEOF * romMethodCount, "methodRemap", true);
+	}
+
 	void allSlotsInExceptionInfoDo(J9ExceptionInfoPointer exceptionInfo) throws CorruptDataException
 	{
 		J9ExceptionHandlerPointer exceptionHandler;
@@ -685,6 +702,11 @@ public class RomClassWalker extends ClassWalker {
 		if (romClass.optionalFlags().allBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_CLASS_ANNOTATION_INFO)) {
 			classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "classAnnotationsSRP");
 			allSlotsInAnnotationDo(U32Pointer.cast(cursor.get()), "classAnnotations");
+			cursor = cursor.add(1);
+		}
+		if (romClass.optionalFlags().allBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_METHOD_REMAP)) {
+			classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "methodRemapSRP");
+			allSlotsInMethodRemapDo(U16Pointer.cast(cursor.get()));
 			cursor = cursor.add(1);
 		}
 

@@ -1527,6 +1527,13 @@ debugVariableInfoStartDo(U_8 * variableInfo, U_32 variableInfoCount, J9VariableI
 J9VariableInfoValues * 
 variableInfoStartDo(J9MethodDebugInfo * methodInfo, J9VariableInfoWalkState* state);
 
+/**
+* @brief Fetch the method remap array from a ROM class
+* @param *romClass
+* @return The method remap array (pointer to array of U_16)
+*/
+U_16 *
+getMethodRemapForROMClass(J9ROMClass *romClass);
 
 
 /* ---------------- rcdump.c ---------------- */

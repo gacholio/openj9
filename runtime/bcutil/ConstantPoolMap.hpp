@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,6 +163,13 @@ public:
 		}
 	}
 
+	void methodRemapDo(SplitEntryVisitor *visitor)
+	{
+		for (U_16 i = 0; i < _classFileOracle->getMethodsCount(); i++) {
+			visitor->visitSplitEntry(_methodRemapEntries[i]);
+		}
+	}
+
 	U_32 getMethodTypeCount() const { return _methodTypeCount; }
 	U_32 getVarHandleMethodTypeCount() const { return _varHandleMethodTypeCount; }
 	U_32 getVarHandleMethodTypePaddedCount() const { return _varHandleMethodTypeCount + (_varHandleMethodTypeCount & 0x1); /* Rounding up to an even number */ }
@@ -172,6 +179,7 @@ public:
 	U_16 getROMConstantPoolCount() const { return _romConstantPoolCount; }
 	U_16 getStaticSplitEntryCount() const { return _staticSplitEntryCount; }
 	U_16 getSpecialSplitEntryCount() const { return _specialSplitEntryCount; }
+	bool hasMethodRemap() const { return true; }
 
 	U_16 getROMClassCPIndex(U_16 cfrCPIndex, UDATA splitType) const
 	{
@@ -341,6 +349,7 @@ private:
 	U_8 *_romConstantPoolTypes;
 	U_16 *_staticSplitEntries;
 	U_16 *_specialSplitEntries;
+	U_16 *_methodRemapEntries;
 	U_32 _methodTypeCount;
 	U_16 _varHandleMethodTypeCount;
 	U_16 *_varHandleMethodTypeLookupTable;

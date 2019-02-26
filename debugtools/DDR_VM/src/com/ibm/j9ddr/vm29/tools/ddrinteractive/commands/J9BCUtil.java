@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -645,6 +645,9 @@ public class J9BCUtil {
 		/* dump split side tables */
 		dumpStaticSplitSideTable(out, romClass);
 		dumpSpecialSplitSideTable(out, romClass);
+
+		/* Dump method remap array */
+		dumpMethodRemap(out, romClass);
 	}
 
 	private static void dumpCPShapeDescription(PrintStream out, J9ROMClassPointer romClass, long flags) throws CorruptDataException {
@@ -1069,7 +1072,30 @@ public class J9BCUtil {
 			}
 		}
 	}
-	
+
+	/**
+	 * This method is Java implementation of rdump.c#dumpMethodRemap function.
+	 * This method is called when dumping a ROMClass.
+	 * 	  
+	 * @param out PrintStream to print the user info to the console
+	 * @param romClass ROMClass address in the dump file. 
+	 * 
+	 * @throws CorruptDataException
+	 */
+	private static void dumpMethodRemap(PrintStream out, J9ROMClassPointer romClass) throws CorruptDataException
+	{
+		U16Pointer methodRemap = OptInfo.getMethodRemapForROMClass(romClass);
+		if (methodRemap.notNull()) {
+			int romMethodCount = romClass.romMethodCount().intValue();
+			out.print(String.format("Method remap (%d):", romMethodCount));
+			U16Pointer cursor = romClass.specialSplitMethodRefIndexes();
+			for (int i = 0; i < romMethodCount; i++) {
+				out.print(String.format(" %d", i, methodRemap.at(i).intValue()));
+			}
+			out.print(nl);
+		}
+	}
+
 	private static void dumpStackMapTable(PrintStream out, J9ROMClassPointer romclass, J9ROMMethodPointer romMethod, long flags) throws CorruptDataException {
 		 U32Pointer stackMapMethod = ROMHelp.getStackMapFromROMMethod(romMethod);
 		 U16 stackMapCount;

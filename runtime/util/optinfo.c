@@ -729,3 +729,13 @@ getLineNumberForROMClassFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9RO
 	return number;
 }
 
+U_16 *
+getMethodRemapForROMClass(J9ROMClass *romClass)
+{
+	U_16 *remap = NULL;
+	U_32 *ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_METHOD_REMAP);
+	if (NULL != ptr) {
+		remap = SRP_PTR_GET(ptr, U_16*);
+	}
+	return remap;
+}

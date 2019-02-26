@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@ static J9ROMMethod* allSlotsInROMMethodDo (J9ROMClass* romClass, J9ROMMethod* me
 static UDATA allSlotsInROMFieldDo(J9ROMClass* romClass, J9ROMFieldShape* field, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static void allSlotsInConstantPoolDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static void allSlotsInEnclosingObjectDo (J9ROMClass* romClass, J9EnclosingObject* enclosingObject, J9ROMClassWalkCallbacks* callbacks, void* userData);
+static void allSlotsInMethodRemapDo(J9ROMClass* romClass, U_16* methodRemap, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static UDATA allSlotsInAnnotationDo(J9ROMClass* romClass, U_32* annotation, const char *annotationSectionName,  J9ROMClassWalkCallbacks* callbacks, void* userData);
 static void allSlotsInExceptionInfoDo (J9ROMClass* romClass, J9ExceptionInfo* exceptionInfo, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static UDATA allSlotsInMethodDebugInfoDo (J9ROMClass* romClass, U_32* cursor, J9ROMClassWalkCallbacks* callbacks, void* userData);
@@ -773,6 +774,14 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 		}
 		cursor++;
 	}
+	if (J9_ARE_ANY_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_METHOD_REMAP)) {
+		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(J9SRP), userData);
+		if (rangeValid) {
+			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "methodRemapSRP", userData);
+			allSlotsInMethodRemapDo(romClass, SRP_PTR_GET(cursor, U_16 *), callbacks, userData);
+		}
+		cursor++;
+	}
 
 	callbacks->sectionCallback(romClass, optionalInfo, (UDATA)cursor - (UDATA)optionalInfo, "optionalInfo", userData);
 }
@@ -1181,6 +1190,29 @@ allSlotsInEnclosingObjectDo(J9ROMClass* romClass, J9EnclosingObject* enclosingOb
 		SLOT_CALLBACK(romClass, J9ROM_U32, enclosingObject, classRefCPIndex);
 		SLOT_CALLBACK(romClass, J9ROM_NAS, enclosingObject, nameAndSignature);
 		callbacks->sectionCallback(romClass, enclosingObject, sizeof(J9EnclosingObject), "enclosingObject", userData);
+	}
+}
+
+static void
+allSlotsInMethodRemapDo(J9ROMClass* romClass, U_16* methodRemap, J9ROMClassWalkCallbacks* callbacks, void* userData)
+{
+	BOOLEAN rangeValid;
+	U_16 romMethodCount = romClass->romMethodCount;
+	UDATA remapSize = sizeof(U_16) * romMethodCount;
+
+	if (NULL == methodRemap) {
+		return;
+	}
+
+	rangeValid = callbacks->validateRangeCallback(romClass, methodRemap, remapSize, userData);
+	if (rangeValid) {
+		U_16 *remap = methodRemap;
+		while (0 != romMethodCount) {
+			callbacks->slotCallback(romClass, J9ROM_U16, remap, "methodRemapIndex", userData);
+			remap += 1;
+			romMethodCount -= 1;
+		}
+		callbacks->sectionCallback(romClass, methodRemap, remapSize, "methodRemap", userData);
 	}
 }
 

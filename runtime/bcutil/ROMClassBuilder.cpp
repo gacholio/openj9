@@ -458,7 +458,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 
 	U_32 modifiers = classFileOracle.getAccessFlags();
 	U_32 extraModifiers = computeExtraModifiers(&classFileOracle, context);
-	U_32 optionalFlags = computeOptionalFlags(&classFileOracle, context);
+	U_32 optionalFlags = computeOptionalFlags(&classFileOracle, &constantPoolMap, context);
 
 	/*
 	 * calculate the amount of space required to write out this ROMClass without UTF8s
@@ -1199,7 +1199,7 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 }
 
 U_32
-ROMClassBuilder::computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClassCreationContext *context)
+ROMClassBuilder::computeOptionalFlags(ClassFileOracle *classFileOracle, ConstantPoolMap *constantPoolMap, ROMClassCreationContext *context)
 {
 	ROMClassVerbosePhase v(context, ComputeOptionalFlags);
 
@@ -1228,6 +1228,9 @@ ROMClassBuilder::computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClass
 	}
 	if (classFileOracle->hasVerifyExcludeAttribute()) {
 		optionalFlags |= J9_ROMCLASS_OPTINFO_VERIFY_EXCLUDE;
+	}
+	if (constantPoolMap->hasMethodRemap()) {
+		optionalFlags |= J9_ROMCLASS_OPTINFO_METHOD_REMAP;
 	}
 	return optionalFlags;
 }

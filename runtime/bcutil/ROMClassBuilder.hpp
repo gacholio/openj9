@@ -124,7 +124,7 @@ private:
 
 	BuildResult handleAnonClassName(J9CfrClassFile *classfile);
 	U_32 computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
-	U_32 computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
+	U_32 computeOptionalFlags(ClassFileOracle *classFileOracle, ConstantPoolMap *constantPoolMap, ROMClassCreationContext *context);
 	BuildResult prepareAndLaydown( BufferManager *bufferManager, ClassFileParser *classFileParser, ROMClassCreationContext *context );
 	void checkDebugInfoCompression(J9ROMClass *romClass, ClassFileOracle classFileOracle, SRPKeyProducer *srpKeyProducer, ConstantPoolMap *constantPoolMap, SRPOffsetTable *srpOffsetTable);
 	U_32 finishPrepareAndLaydown(

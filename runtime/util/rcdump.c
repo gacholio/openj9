@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,6 +88,7 @@ static I_32 dumpCPShapeDescription ( J9PortLibrary *portLib, J9ROMClass *romClas
 static I_32 dumpCallSiteData ( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpStaticSplitSideTable( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpSpecialSplitSideTable( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
+static I_32 dumpMethodRemap( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static void printMethodExtendedModifiers(J9PortLibrary *portLib, U_32 modifiers);
 /*
 	Dump a printed representation of the specified @romClass to stdout.
@@ -220,6 +221,9 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 	/* dump split side tables */
 	dumpStaticSplitSideTable(portLib, romClass, flags);
 	dumpSpecialSplitSideTable(portLib, romClass, flags);
+
+	/* Dump method remap array */
+	dumpMethodRemap(portLib, romClass, flags);
 
 	j9tty_printf( PORTLIB, "\n");
 	return BCT_ERR_NO_ERROR;
@@ -608,6 +612,26 @@ dumpSpecialSplitSideTable(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 fla
 		for (i = 0; i < romClass->specialSplitMethodRefCount; i++) {
 			j9tty_printf(PORTLIB, "  %16d -> %d\n", i, splitTable[i]);
 		}
+	}
+
+	return BCT_ERR_NO_ERROR;
+}
+
+static I_32
+dumpMethodRemap(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
+{
+	U_16 *methodRemap = getMethodRemapForROMClass(romClass);
+
+	if (NULL != methodRemap) {
+		U_16 i = 0;
+		U_16 romMethodCount = romClass->romMethodCount;
+		PORT_ACCESS_FROM_PORT(portLib);
+
+		j9tty_printf(PORTLIB, "Method remap (%i): ", romMethodCount);
+		for (i = 0; i < romMethodCount; i++) {
+			j9tty_printf(PORTLIB, " %d", i, methodRemap[i]);
+		}
+		j9tty_printf(PORTLIB, "\n");
 	}
 
 	return BCT_ERR_NO_ERROR;

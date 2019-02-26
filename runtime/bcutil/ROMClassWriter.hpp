@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,6 +140,7 @@ private:
 	void writeVarHandleMethodTypeLookupTable(Cursor *cursor, bool markAndCountOnly);
 	void writeStaticSplitTable(Cursor *cursor, bool markAndCountOnly);
 	void writeSpecialSplitTable(Cursor *cursor, bool markAndCountOnly);
+	void writeMethodRemap(Cursor *cursor, bool markAndCountOnly);
 	void writeByteCodes(Cursor *cursor, ClassFileOracle::MethodIterator *methodIterator);
 	U_32 computeNativeSignatureSize(U_8 *methodDescriptor);
 	void writeNativeSignature(Cursor *cursor, U_8 *methodDescriptor, U_8 nativeArgCount);
@@ -167,6 +168,7 @@ private:
 	UDATA _intermediateClassDataSRPKey;
 	UDATA _annotationInfoClassSRPKey;
 	UDATA _typeAnnotationInfoSRPKey;
+	UDATA _methodRemapSRPKey;
 	UDATA _callSiteDataSRPKey;	
 	UDATA _varHandleMethodTypeLookupTableSRPKey;
 	UDATA _staticSplitTableSRPKey;

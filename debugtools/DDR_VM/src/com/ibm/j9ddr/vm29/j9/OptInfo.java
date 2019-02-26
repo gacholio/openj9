@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@ import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPT
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_TYPE_ANNOTATION_INFO;
+import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_METHOD_REMAP;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -40,6 +41,7 @@ import com.ibm.j9ddr.vm29.j9.walkers.LineNumber;
 import com.ibm.j9ddr.vm29.j9.walkers.LineNumberIterator;
 import com.ibm.j9ddr.vm29.j9.walkers.LocalVariableTableIterator;
 import com.ibm.j9ddr.vm29.pointer.SelfRelativePointer;
+import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
@@ -234,6 +236,15 @@ public class OptInfo {
 			return J9SourceDebugExtensionPointer.cast(srpPtr.get());
 		}
 		return J9SourceDebugExtensionPointer.NULL;
+	}
+
+	public static U16Pointer getMethodRemapForROMClass(J9ROMClassPointer romClass) throws CorruptDataException {
+		U16Pointer remap = U16Pointer.NULL;
+		SelfRelativePointer srpPtr = getSRPPtr(J9ROMClassHelper.optionalInfo(romClass), romClass.optionalFlags(), J9_ROMCLASS_OPTINFO_METHOD_REMAP);
+		if (!srpPtr.isNull()) {
+			remap = U16Pointer.cast(srpPtr.get());
+		}
+		return remap;
 	}
 
 }

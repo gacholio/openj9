@@ -571,6 +571,7 @@ jvmtiGetClassMethods(jvmtiEnv* env,
 		J9Class * clazz;
 		UDATA methodCount;
 		jmethodID * methodIDs;
+		J9ROMClass *romClass = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -583,19 +584,25 @@ jvmtiGetClassMethods(jvmtiEnv* env,
 		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
 		ENSURE_CLASS_PRIMITIVE_ARRAY_OR_PREPARED(clazz);
 
-		methodCount = clazz->romClass->romMethodCount;
+		romClass = clazz->romClass;
+		methodCount = romClass->romMethodCount;
 		methodIDs = j9mem_allocate_memory(methodCount * sizeof(jmethodID), J9MEM_CATEGORY_JVMTI_ALLOCATE);
 		if (methodIDs == NULL) {
 			rc = JVMTI_ERROR_OUT_OF_MEMORY;
 		} else {
 			J9Method * methods = clazz->ramMethods;
+			U_16 *methodRemap = getMethodRemapForROMClass(romClass);
 			UDATA i;
 
 			for (i = 0; i < methodCount; ++i) {
 				J9Method * method;
 				J9JNIMethodID * methodID;
+				UDATA methodIndex = i;
 
-				method = &(methods[i]);
+				if (NULL != methodRemap) {
+					methodIndex = methodRemap[i];
+				}
+				method = &(methods[methodIndex]);
 				methodID = vm->internalVMFunctions->getJNIMethodID(currentThread, method);
 				if (methodID == NULL) {
 					rc = JVMTI_ERROR_OUT_OF_MEMORY;

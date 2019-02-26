@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -305,6 +305,7 @@ ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *cl
 	_intermediateClassDataSRPKey(srpKeyProducer->generateKey()),
 	_annotationInfoClassSRPKey(srpKeyProducer->generateKey()),
 	_typeAnnotationInfoSRPKey(srpKeyProducer->generateKey()),
+	_methodRemapSRPKey(srpKeyProducer->generateKey()),
 	_callSiteDataSRPKey(srpKeyProducer->generateKey()),
 	_staticSplitTableSRPKey(srpKeyProducer->generateKey()),
 	_specialSplitTableSRPKey(srpKeyProducer->generateKey()),
@@ -428,6 +429,7 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writeVarHandleMethodTypeLookupTable(cursor, markAndCountOnly);
 	writeStaticSplitTable(cursor, markAndCountOnly);
 	writeSpecialSplitTable(cursor, markAndCountOnly);
+	writeMethodRemap(cursor, markAndCountOnly);
 	cursor->padToAlignment(sizeof(U_64), Cursor::GENERIC); // TODO why U_64 alignment and not U_32
 
 	/*
@@ -841,6 +843,13 @@ public:
 	{
 		if (!_markAndCountOnly) {
 			_constantPoolMap->specialSplitEntriesDo(this); /* visitSplitEntry */
+		}
+	}
+
+	void writeMethodRemap()
+	{
+		if (!_markAndCountOnly) {
+			_constantPoolMap->methodRemapDo(this); /* visitRemapEntry */
 		}
 	}
 
@@ -1669,6 +1678,7 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	 * SRP to simple name
 	 * SRP to 'SRP' (self) if OPTINFO_VERIFY_EXCLUDE.. pretty much a flag, leaving an empty slot.
 	 * SRP to class annotations
+	 * SRP to method remap
 	 * SRP to class Type Annotations
 	 */
 	cursor->mark(_optionalInfoSRPKey);
@@ -1701,6 +1711,9 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 
 	if (_classFileOracle->hasClassAnnotations()) {
 		cursor->writeSRP(_annotationInfoClassSRPKey, Cursor::SRP_TO_GENERIC);
+	}
+	if (_constantPoolMap->hasMethodRemap()) {
+		cursor->writeSRP(_methodRemapSRPKey, Cursor::SRP_TO_GENERIC);
 	}
 	if (_classFileOracle->hasTypeAnnotations()) {
 		cursor->writeSRP(_typeAnnotationInfoSRPKey, Cursor::SRP_TO_GENERIC);
@@ -1753,6 +1766,17 @@ ROMClassWriter::writeSpecialSplitTable(Cursor *cursor, bool markAndCountOnly)
 		UDATA size = UDATA(_constantPoolMap->getSpecialSplitEntryCount()) * sizeof(U_16);
 		CheckSize _(cursor, size);
 		Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeSpecialSplitTable();
+	}
+}
+
+void
+ROMClassWriter::writeMethodRemap(Cursor *cursor, bool markAndCountOnly)
+{
+	if (_constantPoolMap->hasMethodRemap()) {
+		cursor->mark(_methodRemapSRPKey);
+		UDATA size = UDATA(_classFileOracle->getMethodsCount()) * sizeof(U_16);
+		CheckSize _(cursor, size);
+		Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeMethodRemap();
 	}
 }
 

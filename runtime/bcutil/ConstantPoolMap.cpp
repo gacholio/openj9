@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,6 +47,7 @@ ConstantPoolMap::ConstantPoolMap(BufferManager *bufferManager, ROMClassCreationC
 	_romConstantPoolTypes(NULL),
 	_staticSplitEntries(NULL),
 	_specialSplitEntries(NULL),
+	_methodRemapEntries(NULL),
 	_methodTypeCount(0),
 	_varHandleMethodTypeCount(0),
 	_varHandleMethodTypeLookupTable(NULL),
@@ -186,15 +187,23 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 	_romConstantPoolTypes = (U_8 *) _bufferManager->alloc(_romConstantPoolCount * sizeof(U_8));
 	_staticSplitEntries = (U_16 *) _bufferManager->alloc(_staticSplitEntryCount * sizeof(U_16));
 	_specialSplitEntries = (U_16 *) _bufferManager->alloc(_specialSplitEntryCount * sizeof(U_16));
+	_methodRemapEntries = (U_16 *) _bufferManager->alloc(_classFileOracle->getMethodsCount() * sizeof(U_16));
 
 	if ((NULL == _romConstantPoolEntries)
 		|| (NULL == _romConstantPoolTypes)
 		|| (NULL == _staticSplitEntries)
 		|| (NULL == _specialSplitEntries)
+		|| (NULL == _methodRemapEntries)
 	) {
 		_buildResult = OutOfMemory;
 		return;
 	}
+
+	// BOGO
+	for (U_16 i = 0; i < _classFileOracle->getMethodsCount(); ++i) {
+		_methodRemapEntries[i] = i;
+	}
+	//BOGO
 
 	/* Skip the zeroth entry. */
 	U_16 ldcCPIndex = 1;
