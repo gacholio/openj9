@@ -2896,6 +2896,8 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	}
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_OSR_SAFE_POINT; /* Enable OSR safe point by default */
 	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_ENABLE_HCR; /* Enable HCR by default */
+	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_DEBUG_VM_ACCESS;
+	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_DEBUG_MODE;
 
 	for (i = 0; i < vm_args->nOptions; ++i) {
 		char * testString = getOptionString(j9vm_args, i);	/* may return mapped value */

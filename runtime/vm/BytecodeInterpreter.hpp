@@ -57,8 +57,12 @@
 #include "ObjectMonitor.hpp"
 #include "JITInterface.hpp"
 
-#if 0
-#define DEBUG_MUST_HAVE_VM_ACCESS(vmThread) Assert_VM_mustHaveVMAccess(vmThread)
+#if 1
+#define DEBUG_MUST_HAVE_VM_ACCESS(vmThread) \
+	do { \
+		Assert_VM_mustHaveVMAccess(vmThread); \
+		Assert_VM_false(vmThread->inNative); \
+	} while(0)
 #else
 #define DEBUG_MUST_HAVE_VM_ACCESS(vmThread)
 #endif
@@ -2214,6 +2218,7 @@ done:;
 		/* Release VM access (all object pointers are indirect referenced from here on) */
 		UDATA relativeBP = _arg0EA - *bp;
 		updateVMStruct(REGISTER_ARGS);
+		DEBUG_MUST_HAVE_VM_ACCESS(_currentThread);
 		VM_VMAccess::inlineExitVMToJNI(_currentThread);
 		VM_VMHelpers::beforeJNICall(_currentThread);
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
@@ -2237,6 +2242,7 @@ done:;
 		/* Reacquire VM access (all object pointers can be direct referenced from this point on) */
 		VM_VMAccess::inlineEnterVMFromJNI(_currentThread);
 		VMStructHasBeenUpdated(REGISTER_ARGS);
+		DEBUG_MUST_HAVE_VM_ACCESS(_currentThread);
 		*bp = _arg0EA - relativeBP;
 		if ((UDATA)-1 == (((J9SFJNINativeMethodFrame *)(*bp + 1)) - 1)->specialFrameFlags) {
 			result = ffiFailed;
@@ -10286,6 +10292,7 @@ noUpdate:
 			break;
 		}
 #endif
+		DEBUG_MUST_HAVE_VM_ACCESS(vmThread);
 		return _nextAction;
 	}
 
