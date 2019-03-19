@@ -96,7 +96,7 @@ static void replaceInAllClassLoaders(J9VMThread * currentThread, J9Class * origi
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 static jvmtiError jitEventInitialize(J9VMThread * currentThread, jint redefinedClassCount, UDATA redefinedMethodCount, J9JVMTIHCRJitEventData * eventData);
 static void jitEventAddMethod(J9VMThread * currentThread, J9JVMTIHCRJitEventData * eventData, J9Method * oldMethod, J9Method * newMethod, UDATA equivalent);
-static void jitEventAddClass(J9VMThread * currentThread, J9JVMTIHCRJitEventData * eventData, J9Class * originalRAMClass, J9Class * replacementRAMClass);
+static void jitEventAddClass(J9VMThread * currentThread, J9JVMTIHCRJitEventData * eventData, J9Class * originalRAMClass, J9Class * replacementRAMClass, BOOLEAN fastHCR);
 #endif
 static void swapClassesForFastHCR(J9Class *originalClass, J9Class *newClass);
 
@@ -2902,10 +2902,9 @@ verifyMethodsAreSame(J9VMThread * currentThread, J9JVMTIClassPair * classPair, U
 
 	originalROMClass = oldestRAMClass->romClass;
 
+	/* Verify that the methods are the same or that only TODO methods have been added */
 
-	/* Verify that the methods are the same */
-
-	if (originalROMClass->romMethodCount == replacementROMClass->romMethodCount) {
+	if (replacementROMClass->romMethodCount >= originalROMClass->romMethodCount) {
 		PORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
 		J9ROMMethod * originalROMMethod = J9ROMCLASS_ROMMETHODS(originalROMClass);
 		BOOLEAN identityRemap;
@@ -2997,12 +2996,36 @@ verifyMethodsAreSame(J9VMThread * currentThread, J9JVMTIClassPair * classPair, U
 			classPair->methodRemapIndices = NULL;
 		}
 
-	} else {
-		if (originalROMClass->romMethodCount < replacementROMClass->romMethodCount) {
-			rc = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_ADDED;
-		} else {
-			rc = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_DELETED;
+		/* Make sure any added methods are allowed */
+
+		if (replacementROMClass->romMethodCount != originalROMClass->romMethodCount) {
+			J9ROMMethod * replacementROMMethod = J9ROMCLASS_ROMMETHODS(replacementROMClass);
+			for (j = 0; j < replacementROMClass->romMethodCount; ++j) {
+				J9ROMMethod * originalROMMethod = J9ROMCLASS_ROMMETHODS(originalROMClass);
+				U_32 k;
+		
+				for (k = 0; k < originalROMClass->romMethodCount; ++k) {
+					if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(originalROMClass, replacementROMClass, originalROMMethod, replacementROMMethod)) {
+						break;
+					}
+					originalROMMethod = nextROMMethod(originalROMMethod);
+				}
+				if (k == originalROMClass->romMethodCount) {
+					U_32 modifiers = replacementROMMethod->modifiers;
+					/* Method in new class has been added */
+					if (J9_ARE_ANY_BITS_SET(modifiers, J9AccPrivate)) {
+						if (J9_ARE_ANY_BITS_SET(modifiers, J9AccStatic | J9AccFinal)) {
+							continue;
+						}
+					}
+					rc = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_ADDED;
+					goto done;
+				}
+				replacementROMMethod = nextROMMethod(replacementROMMethod);
+			}
 		}
+	} else {
+		rc = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_DELETED;
 	}
 
 
@@ -3493,7 +3516,7 @@ fixMethodEquivalences(J9VMThread * currentThread,
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 		if ((NULL != eventData) && (eventData->initialized) && (classPair->flags & J9JVMTI_CLASS_PAIR_FLAG_REDEFINED)) {
-			jitEventAddClass(currentThread, eventData, (fastHCR ? replacementRAMClass : originalRAMClass), replacementRAMClass);
+			jitEventAddClass(currentThread, eventData, originalRAMClass, replacementRAMClass, fastHCR);
 			addJitEventData = TRUE;
 		} else {
 			addJitEventData = FALSE;
@@ -3724,7 +3747,7 @@ jitEventAddMethod(J9VMThread * currentThread, J9JVMTIHCRJitEventData * eventData
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 static void
-jitEventAddClass(J9VMThread * currentThread, J9JVMTIHCRJitEventData * eventData, J9Class * originalRAMClass, J9Class * replacementRAMClass)
+jitEventAddClass(J9VMThread * currentThread, J9JVMTIHCRJitEventData * eventData, J9Class * originalRAMClass, J9Class * replacementRAMClass, BOOLEAN fastHCR)
 {
 	J9JITRedefinedClass * classMapping;
     J9JITMethodEquivalence * methodEquiv;
@@ -3732,7 +3755,7 @@ jitEventAddClass(J9VMThread * currentThread, J9JVMTIHCRJitEventData * eventData,
 	classMapping = (J9JITRedefinedClass *) eventData->dataCursor;
 	methodEquiv  = (J9JITMethodEquivalence *) ((char *) classMapping + sizeof(J9JITRedefinedClass));
 
-	classMapping->oldClass = originalRAMClass;
+	classMapping->oldClass = fastHCR ? replacementRAMClass : originalRAMClass;
 	classMapping->newClass = replacementRAMClass;
 	classMapping->methodCount = originalRAMClass->romClass->romMethodCount;
 	classMapping->methodList = methodEquiv;
