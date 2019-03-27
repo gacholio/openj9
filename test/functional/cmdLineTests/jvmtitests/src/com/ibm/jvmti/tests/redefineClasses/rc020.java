@@ -43,6 +43,7 @@ public class rc020  {
         }
 
 	public boolean testRedefineObject() throws Throwable {
+/*
 		System.out.println("calling to resolve");
 		PrivSub o = new PrivSub();
 		try { o.m(); } catch(Throwable t) { t.printStackTrace(); }
@@ -51,6 +52,7 @@ public class rc020  {
 		redefineClass(PrivMid.class, b.length, b);
 		System.out.println("calling after redefine");
 		try { o.m(); } catch(Throwable t) { t.printStackTrace(); }
+*/
 		return true;
 
 	}
