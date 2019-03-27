@@ -25,7 +25,7 @@ import java.io.*;
 
 import com.ibm.jvmti.tests.util.Util;
 
-import priv.*;
+// import priv.*;
 
 public class rc020  {
 	public static native boolean redefineClass(Class name, int classBytesSize,
