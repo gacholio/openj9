@@ -2368,7 +2368,7 @@ recreateRAMClasses(J9VMThread * currentThread, J9HashTable * classHashTable, J9H
 			options,
 			NULL,
 			protectionDomain,
-			classPairs[i]->methodRemap,
+			NULL,
 			J9_CP_INDEX_NONE,
 			LOAD_LOCATION_UNKNOWN,
 			originalRAMClass,
