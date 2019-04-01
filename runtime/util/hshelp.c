@@ -78,7 +78,7 @@ static void copyStaticFields (J9VMThread * currentThread, J9Class * originalRAMC
 static void fixLoadingConstraints (J9JavaVM * vm, J9Class * oldClass, J9Class * newClass);
 static UDATA classPairHash(void* entry, void* userData);
 static UDATA classPairEquals(void* left, void* right, void* userData);
-static UDATA findMethodInVTable(J9Method *method, UDATA *vTable);
+static UDATA findMethodInVTable(J9Class *clazz, J9ROMMethod *romMethod, UDATA *vTable);
 static jvmtiError addClassesRequiringNewITables(J9JavaVM *vm, J9HashTable *classHashTable, UDATA *addedMethodCountPtr, UDATA *addedClassCountPtr);
 static jvmtiError verifyFieldsAreSame (J9VMThread * currentThread, UDATA fieldType, J9ROMClass * originalROMClass, J9ROMClass * replacementROMClass,
 									   UDATA extensionsEnabled, UDATA * extensionsUsed);
@@ -930,9 +930,9 @@ fixITables(J9VMThread * currentThread, J9HashTable * classPairs)
 }
 
 static UDATA
-findMethodInVTable(J9Method *method, UDATA *vTable)
+findMethodInVTable(J9Class *clazz, J9ROMMethod *romMethod, UDATA *vTable)
 {
-	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	J9ROMClass *romClass = clazz->romClass;
 	J9VTableHeader *vTableHeader = (J9VTableHeader *)vTable;
 	J9Method **vTableMethods = J9VTABLE_FROM_HEADER(vTableHeader);
 	UDATA vTableSize = vTableHeader->size;
@@ -944,7 +944,7 @@ findMethodInVTable(J9Method *method, UDATA *vTable)
 		J9ROMMethod *vTableRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(vTableMethod);
 
 		if (vTableRomMethod->modifiers & J9AccPublic) {
-			if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(J9_CLASS_FROM_METHOD(method)->romClass, J9_CLASS_FROM_METHOD(vTableRomMethod)->romClass, romMethod, vTableRomMethod)) {
+			if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(romClass, J9_CLASS_FROM_METHOD(vTableRomMethod)->romClass, romMethod, vTableRomMethod)) {
 				return searchIndex;
 			}
 		}
@@ -998,20 +998,25 @@ fixITablesForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs)
 						J9Class *interfaceClass = allInterfaces->interfaceClass;
 						J9JVMTIClassPair exemplar;
 						J9JVMTIClassPair *result;
-						UDATA methodCount = interfaceClass->romClass->romMethodCount;
 
 						exemplar.originalRAMClass = interfaceClass;
 						result = hashTableFind(classPairs, &exemplar);
 						if ((NULL != result) && (NULL != result->methodRemap)) {
+							J9Class * replacementRAMClass = result->replacementClass.ramClass;
+							UDATA methodCount = replacementRAMClass->romClass->romMethodCount;
 							UDATA methodIndex;
+							UDATA localIndex = 0;
 							UDATA *vTableHeader = (UDATA *)J9VTABLE_HEADER_FROM_RAM_CLASS(clazz);
 	
 							for (methodIndex = 0; methodIndex < methodCount; methodIndex++) {
-								UDATA vTableIndex = findMethodInVTable(&interfaceClass->ramMethods[methodIndex], vTableHeader);
-								iTableMethods[methodIndex] = J9VTABLE_OFFSET_FROM_INDEX(vTableIndex);
+								J9ROMMethod *romMethod = result->methodRemap[methodIndex];
+								if (J9ROMMETHOD_IN_ITABLE(romMethod)) {
+									UDATA vTableIndex = findMethodInVTable(replacementRAMClass, romMethod, vTableHeader);
+									iTableMethods[localIndex++] = J9VTABLE_OFFSET_FROM_INDEX(vTableIndex);
+								}
 							}
 						}
-						iTableMethods += methodCount;
+						iTableMethods += J9INTERFACECLASS_ITABLEMETHODCOUNT(interfaceClass);
 						allInterfaces = allInterfaces->next;
 					} while (NULL != allInterfaces);
 					iTable = iTable->next;

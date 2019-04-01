@@ -228,18 +228,63 @@ iTableMethodAtIndex(J9Class *interfaceClass, UDATA index)
 	return ramMethod;
 }
 
+static J9Class *
+getOldestClassVersion(J9Class * clazz)
+{
+	while (clazz->replacedClass != NULL) {
+		clazz = clazz->replacedClass;
+	}
+	return clazz;
+}
+
+#define J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(romClass1, romClass2, o1, o2) \
+areUTFPairsIdentical(J9ROMMETHOD_GET_NAME(romClass1, o1), J9ROMMETHOD_GET_SIGNATURE(romClass1, o1), J9ROMMETHOD_GET_NAME(romClass2, o2), J9ROMMETHOD_GET_SIGNATURE(romClass2, o2))
+
+static UDATA
+areUTFPairsIdentical(J9UTF8 * leftUtf1, J9UTF8 * leftUtf2, J9UTF8 * rightUtf1, J9UTF8 * rightUtf2)
+{
+	if ((J9UTF8_LENGTH(leftUtf1) != J9UTF8_LENGTH(rightUtf1)) || (J9UTF8_LENGTH(leftUtf2) != J9UTF8_LENGTH(rightUtf2))) {
+		return FALSE;
+	}
+	if (0 != memcmp(J9UTF8_DATA(leftUtf1), J9UTF8_DATA(rightUtf1), J9UTF8_LENGTH(leftUtf1))) {
+		return FALSE;
+	}
+	if (0 != memcmp(J9UTF8_DATA(leftUtf2), J9UTF8_DATA(rightUtf2), J9UTF8_LENGTH(leftUtf2))) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
 UDATA
 getITableIndexWithinDeclaringClass(J9Method *method)
 {
 	UDATA index = 0;
 	J9Class * const methodClass = J9_CLASS_FROM_METHOD(method);
-	J9Method *ramMethod = methodClass->ramMethods;
-	UDATA const methodCount = methodClass->romClass->romMethodCount;
-	while (method != ramMethod) {
-		if (J9ROMMETHOD_IN_ITABLE(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod))) {
-			index += 1;
+	if (NULL == methodClass->replacedClass) {
+		J9Method *ramMethod = methodClass->ramMethods;
+		UDATA const methodCount = methodClass->romClass->romMethodCount;
+		while (method != ramMethod) {
+			if (J9ROMMETHOD_IN_ITABLE(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod))) {
+				index += 1;
+			}
+			ramMethod += 1;
 		}
-		ramMethod += 1;
+	} else {
+		J9Class *oldestRAMClass = getOldestClassVersion(methodClass);
+		J9ROMMethod *inputROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+		J9Method *ramMethod = oldestRAMClass->ramMethods;
+		UDATA const methodCount = oldestRAMClass->romClass->romMethodCount;
+		while (TRUE) {
+			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
+			if (J9ROMMETHOD_IN_ITABLE(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod))) {
+				if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(methodClass->romClass, oldestRAMClass->romClass, inputROMMethod, romMethod)) {
+					break;
+				}
+				index += 1;
+			}
+			ramMethod += 1;
+		}
+
 	}
 	return index;
 	

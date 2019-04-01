@@ -755,21 +755,31 @@ computeVTable(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *supercl
 	vmStruct->tempSlot = 0;
 
 	/* Compute the absolute maximum size of the vTable and allocate it. */
-	
+
+	/* header slots */
+	maxSlots = sizeof(J9VTableHeader) / sizeof(UDATA);
+
 	if ((romClass->modifiers & J9AccInterface) == J9AccInterface) {
-		maxSlots = 1;
+		U_32 iTableCount = 0;
+		U_32 romMethodCount = romClass->romMethodCount;
+		J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+		while (0 != romMethodCount) {
+			if (J9ROMMETHOD_IN_ITABLE(romMethod)) {
+				iTableCount += 1;
+			}
+			romMethod = nextROMMethod(romMethod);
+			romMethodCount -= 1;
+		}
+		maxSlots += (((iTableCount + 1) * sizeof(U_32)) / sizeof(UDATA));
 	} else {
 		/* All methods in the current class might need new slots in the vTable. */
-		maxSlots = romClass->romMethodCount;
+		maxSlots += romClass->romMethodCount;
 		
 		/* Add in all real method slots from the superclass. */
 		if (superclass != NULL) {
 			J9VTableHeader *superVTable = J9VTABLE_HEADER_FROM_RAM_CLASS(superclass);
 			maxSlots += superVTable->size;
 		}
-		
-		/* header slots */
-		maxSlots += (sizeof(J9VTableHeader) / sizeof(UDATA));
 
 		/* For non-array classes, compute the total possible size of implementing all interface methods. */
 		if (J9ROMCLASS_IS_ARRAY(romClass) == 0) {
