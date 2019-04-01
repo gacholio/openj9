@@ -2080,7 +2080,7 @@ initializeMethodID(J9VMThread * currentThread, J9JNIMethodID * methodID, J9Metho
 			 * always use the declaring class of the interface method.  Pass NULL here to allow
 			 * for methodIDs to be created on obsolete classes for HCR purposes.
 			 */
-			vTableIndex = getITableIndexForMethod(method, NULL);
+			vTableIndex = getITableIndexForMethod(currentThread, method, NULL);
 			/* Ensure the iTableIndex isn't so large it sets J9_JNI_MID_INTERFACE */
 			Assert_VM_false(J9_ARE_ANY_BITS_SET(vTableIndex, J9_JNI_MID_INTERFACE));
 			vTableIndex |= J9_JNI_MID_INTERFACE;

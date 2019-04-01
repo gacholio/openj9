@@ -1669,7 +1669,7 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 }
 
 static void
-fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *classHashTable, J9HashTable *methodHashTable, J9Class *objectClass)
+fixRAMConstantPoolForFastHCR(J9VMThread *currentThread, J9ConstantPool *ramConstantPool, J9HashTable *classHashTable, J9HashTable *methodHashTable, J9Class *objectClass)
 {
 	J9ROMClass *romClass = ramConstantPool->ramClass->romClass;
 	U_32 *cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
@@ -1757,7 +1757,7 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 										methodPair.oldMethod = iTableMethodAtIndex(obsoleteClass, methodIndex);
 										methodResult = hashTableFind(methodHashTable, &methodPair);
 										if (NULL != methodResult) {
-											newMethodIndex = getITableIndexForMethod(methodResult->newMethod, resolvedClass);
+											newMethodIndex = getITableIndexForMethod(currentThread, methodResult->newMethod, resolvedClass);
 										}
 									}
 								}
@@ -1824,7 +1824,7 @@ fixConstantPoolsForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs, J
 			/* NOTE: We must fix up the constant pool even if the class is obsolete, as
 			 * this is necessary to invoke new methods from running old methods.
 			 */
-			fixRAMConstantPoolForFastHCR(J9_CP_FROM_CLASS(clazz), classPairs, methodPairs, objectClass);
+			fixRAMConstantPoolForFastHCR(currentThread, J9_CP_FROM_CLASS(clazz), classPairs, methodPairs, objectClass);
 		}
 
 		fixRAMSplitTablesForFastHCR(clazz, methodPairs);
@@ -1833,7 +1833,7 @@ fixConstantPoolsForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs, J
 	}
 	vmFuncs->allClassesEndDo(&state);
 
-	fixRAMConstantPoolForFastHCR((J9ConstantPool *) vm->jclConstantPool, classPairs, methodPairs, objectClass);
+	fixRAMConstantPoolForFastHCR(currentThread, (J9ConstantPool *) vm->jclConstantPool, classPairs, methodPairs, objectClass);
 }
 
 
@@ -2373,7 +2373,7 @@ recreateRAMClasses(J9VMThread * currentThread, J9HashTable * classHashTable, J9H
 			options,
 			NULL,
 			protectionDomain,
-			NULL,
+			classPairs[i]->methodRemap,
 			J9_CP_INDEX_NONE,
 			LOAD_LOCATION_UNKNOWN,
 			originalRAMClass,

@@ -1878,23 +1878,25 @@ iTableMethodAtIndex(J9Class *interfaceClass, UDATA index);
 /**
  * @brief Retrieve the iTable index of an interface method within the iTable for
  *        its declaring class.
+ * @param currentThread The current J9VMThread
  * @param method The interface method
  * @return UDATA The iTable index (not including the fixed J9ITable header)
  */
 UDATA
-getITableIndexWithinDeclaringClass(J9Method *method);
+getITableIndexWithinDeclaringClass(J9VMThread *currentThread, J9Method *method);
 
 /**
  * @brief Retrieve the index of an interface method within the iTable for an interface
  *        (not necessarily the same interface, as iTables contain methods from all
  *        extended interfaces as well as the local one).
+ * @param currentThread The current J9VMThread
  * @param method The interface method
  * @param targetInterface The interface in whose table to search
  *                        (NULL to use the declaring class of method)
  * @return UDATA The iTable index (not including the fixed J9ITable header)
  */
 UDATA
-getITableIndexForMethod(J9Method * method, J9Class *targetInterface);
+getITableIndexForMethod(J9VMThread *currentThread, J9Method * method, J9Class *targetInterface);
 
 /**
  * Returns the first ROM method following the argument.

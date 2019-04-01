@@ -1107,7 +1107,7 @@ nonpublic:
 					/* Resolved method is a public interface method which appears in the
 					 * vTable and iTable.  Use the iTable index in interfaceClass.
 					 */
-					methodIndex = getITableIndexForMethod(method, interfaceClass);
+					methodIndex = getITableIndexForMethod(vmStruct, method, interfaceClass);
 				}
 			} else {
 				/* Resolved method is in Object */

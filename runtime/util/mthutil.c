@@ -256,11 +256,11 @@ areUTFPairsIdentical(J9UTF8 * leftUtf1, J9UTF8 * leftUtf2, J9UTF8 * rightUtf1, J
 }
 
 UDATA
-getITableIndexWithinDeclaringClass(J9Method *method)
+getITableIndexWithinDeclaringClass(J9VMThread *currentThread, J9Method *method)
 {
 	UDATA index = 0;
 	J9Class * const methodClass = J9_CLASS_FROM_METHOD(method);
-	if (NULL == methodClass->replacedClass) {
+	if ((NULL == methodClass->replacedClass) || areExtensionsEnabled(currentThread->javaVM)) {
 		J9Method *ramMethod = methodClass->ramMethods;
 		UDATA const methodCount = methodClass->romClass->romMethodCount;
 		while (method != ramMethod) {
@@ -273,10 +273,9 @@ getITableIndexWithinDeclaringClass(J9Method *method)
 		J9Class *oldestRAMClass = getOldestClassVersion(methodClass);
 		J9ROMMethod *inputROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 		J9Method *ramMethod = oldestRAMClass->ramMethods;
-		UDATA const methodCount = oldestRAMClass->romClass->romMethodCount;
-		while (TRUE) {
+		for(;;) {
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-			if (J9ROMMETHOD_IN_ITABLE(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod))) {
+			if (J9ROMMETHOD_IN_ITABLE(romMethod)) {
 				if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(methodClass->romClass, oldestRAMClass->romClass, inputROMMethod, romMethod)) {
 					break;
 				}
@@ -284,14 +283,12 @@ getITableIndexWithinDeclaringClass(J9Method *method)
 			}
 			ramMethod += 1;
 		}
-
 	}
 	return index;
-	
 }
 
 UDATA
-getITableIndexForMethod(J9Method * method, J9Class *targetInterface)
+getITableIndexForMethod(J9VMThread *currentThread, J9Method *method, J9Class *targetInterface)
 {
 	J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
 	UDATA skip = 0;
@@ -311,7 +308,7 @@ getITableIndexForMethod(J9Method * method, J9Class *targetInterface)
 			allInterfaces = allInterfaces->next;
 		}
 	}
-	return getITableIndexWithinDeclaringClass(method) + skip;
+	return getITableIndexWithinDeclaringClass(currentThread, method) + skip;
 }
 
 J9MethodDebugInfo *

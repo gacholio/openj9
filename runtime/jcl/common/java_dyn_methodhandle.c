@@ -100,7 +100,7 @@ lookupInterfaceMethod(J9VMThread *currentThread, J9Class *lookupClass, J9UTF8 *n
 		} else {
 			if (J9_ARE_ANY_BITS_SET(J9_CLASS_FROM_METHOD(method)->romClass->modifiers, J9AccInterface)) {
 				if (J9ROMMETHOD_IN_ITABLE(J9_ROM_METHOD_FROM_RAM_METHOD(method))) {
-					*methodIndex = getITableIndexForMethod(method, lookupClass);
+					*methodIndex = getITableIndexForMethod(currentThread, method, lookupClass);
 				} else {
 					PORT_ACCESS_FROM_VMC(currentThread);
 					J9Class *clazz = J9_CLASS_FROM_METHOD(method);
