@@ -96,11 +96,10 @@ Java_com_ibm_jvmti_tests_redefineClasses_rc020_redefineClass(JNIEnv * jni_env, j
 	classdef.class_byte_count = classBytesSize;
 	classdef.klass = originalClass;
 	
-jclass clazz = (*jni_env)->FindClass(jni_env, "priv/PrivMid");
-showMethods(jni_env, clazz, "before");
+showMethods(jni_env, originalClass, "before");
     err = (*jvmti_env)->RedefineClasses(jvmti_env, 1, &classdef);
     (*jvmti_env)->Deallocate(jvmti_env, (unsigned char *) class_bytes);
-showMethods(jni_env, clazz, "after");
+showMethods(jni_env, originalClass, "after");
 
     if (err != JVMTI_ERROR_NONE) {
     	error(env, err, "RedefineClasses failed");
