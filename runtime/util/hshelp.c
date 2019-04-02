@@ -967,7 +967,7 @@ fixITablesForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs)
 		J9ROMClass *romClass = classPair->originalRAMClass->romClass;
 
 		if ((0 != (romClass->modifiers & J9AccInterface)) && (NULL != classPair->methodRemap)) {
-			updateITables = TRUE;
+			updateITables = FALSE;
 			break;
 		}
 		classPair = hashTableNextDo(&hashTableState);
