@@ -285,9 +285,21 @@ unmarkInterfaces(J9Class *interfaceHead)
 	}
 }
 
+static J9Class *
+getOldestClassVersion(J9Class * clazz)
+{
+	while (clazz->replacedClass != NULL) {
+		clazz = clazz->replacedClass;
+	}
+	return clazz;
+}
+
 static void
 addITableMethods(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClass, UDATA **currentSlot)
 {
+	if ((NULL != interfaceClass->replacedClass) && !areExtensionsEnabled(vmStruct->javaVM)) {
+		interfaceClass = getOldestClassVersion(interfaceClass);
+	}
 	J9ROMClass *interfaceRomClass = interfaceClass->romClass;
 	UDATA count = interfaceRomClass->romMethodCount;
 	if (count != 0) {
