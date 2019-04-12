@@ -150,7 +150,7 @@ private:
 #endif
 	MM_ObjectAllocationAPI _objectAllocate;
 	MM_ObjectAccessBarrierAPI _objectAccessBarrier;
-
+	U_32 (*_interp)(J9VMThread *currentThread);
 protected:
 
 public:
@@ -1570,9 +1570,16 @@ obj:;
 			}
 #if defined(DO_HOOKS)
 			rc = REPORT_METHOD_ENTER;
+			goto done;
 #endif
 		} else {
 			rc = GOTO_JAVA_STACK_OVERFLOW;
+			goto done;
+		}
+		if (NULL != _interp) {
+			updateVMStruct(REGISTER_ARGS);
+			rc = (VM_BytecodeAction)_interp(_currentThread);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
 		}
 done:
 		return rc;
@@ -10345,6 +10352,7 @@ noUpdate:
 #endif
 		, _objectAllocate(currentThread)
 		, _objectAccessBarrier(currentThread)
+		, _interp(currentThread->javaVM->interp)
 	{
 	}
 };
