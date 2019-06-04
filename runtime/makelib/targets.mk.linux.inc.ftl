@@ -41,11 +41,11 @@ $(UMA_DLLTARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 		$(VMLINK) $(UMA_LINK_PATH) -o $(UMA_DLLTARGET) \
 		$(UMA_OBJECTS) \
 		$(UMA_DLL_LINK_POSTFLAGS)
-ifdef j9vm_uma_gnuDebugSymbols
-	$(OBJCOPY) --only-keep-debug $(UMA_DLLTARGET) $(UMA_DLLTARGET).dbg
-	$(OBJCOPY) --strip-debug $(UMA_DLLTARGET)
-	$(OBJCOPY) --add-gnu-debuglink=$(UMA_DLLTARGET).dbg $(UMA_DLLTARGET)
-endif
+#ifdef j9vm_uma_gnuDebugSymbols
+#	$(OBJCOPY) --only-keep-debug $(UMA_DLLTARGET) $(UMA_DLLTARGET).dbg
+#	$(OBJCOPY) --strip-debug $(UMA_DLLTARGET)
+#	$(OBJCOPY) --add-gnu-debuglink=$(UMA_DLLTARGET).dbg $(UMA_DLLTARGET)
+#endif
 </#assign>
 
 <#assign exe_target_rule>
@@ -147,8 +147,8 @@ ifndef UMA_DO_NOT_OPTIMIZE_CCODE
     </#if>
   </#if>
 else
-  UMA_OPTIMIZATION_CFLAGS += -O0
-  UMA_OPTIMIZATION_CXXFLAGS += -O0
+  UMA_OPTIMIZATION_CFLAGS += -O0 -fno-inline
+  UMA_OPTIMIZATION_CXXFLAGS += -O0 -fno-inline
 endif
 
 CFLAGS += $(UMA_OPTIMIZATION_CFLAGS)
@@ -234,11 +234,11 @@ ASFLAGS += -noexecstack
 </#if>
 
 ifdef j9vm_uma_gnuDebugSymbols
-  CFLAGS += -g
-  CXXFLAGS += -g
+  CFLAGS += -gdwarf-2
+  CXXFLAGS += -gdwarf-2
   <#if uma.spec.processor.ppc>
     ifdef USE_PPC_GCC
-      PPC_GCC_CXXFLAGS += -g
+      PPC_GCC_CXXFLAGS += -gdwarf-2
     endif
   </#if>
   <#if uma.spec.processor.x86 || uma.spec.processor.amd64>
@@ -386,7 +386,7 @@ endif
   UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_SHARED_LIBRARIES)
 
   ifdef j9vm_uma_gnuDebugSymbols
-    UMA_DLL_LINK_POSTFLAGS += -g
+    UMA_DLL_LINK_POSTFLAGS += -gdwarf-2
   endif
 
   <#if uma.spec.processor.x86>
