@@ -2629,29 +2629,23 @@ done:
 		return rc;
 	}
 
-	/* java.lang.Class: public native boolean isAssignableFrom(Class<?> cls); */
+	/* java.lang.Class: private native boolean isAssignableFromImpl(Class<?> cls); */
 	VMINLINE VM_BytecodeAction
-	inlClassIsAssignableFrom(REGISTER_ARGS_LIST)
+	inlClassIsAssignableFromImpl(REGISTER_ARGS_LIST)
 	{
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+		I_32 result = 0;
 		j9object_t cls = ((j9object_t*)_sp)[0];
-		if (NULL == cls) {
-			buildInternalNativeStackFrame(REGISTER_ARGS);
-			rc = THROW_NPE;
-		} else {
-			I_32 result = 0;
-			J9Class *parmClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, cls);
-			J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, ((j9object_t*)_sp)[1]);
-			if (J9ROMCLASS_IS_PRIMITIVE_TYPE(parmClazz->romClass) || J9ROMCLASS_IS_PRIMITIVE_TYPE(receiverClazz->romClass)) {
-				if (parmClazz == receiverClazz) {
-					result = 1;
-				}
-			} else {
-				result = (I_32)VM_VMHelpers::inlineCheckCast(parmClazz, receiverClazz);
+		J9Class *parmClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, cls);
+		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, ((j9object_t*)_sp)[1]);
+		if (J9ROMCLASS_IS_PRIMITIVE_TYPE(parmClazz->romClass) || J9ROMCLASS_IS_PRIMITIVE_TYPE(receiverClazz->romClass)) {
+			if (parmClazz == receiverClazz) {
+				result = 1;
 			}
-			returnSingleFromINL(REGISTER_ARGS, result, 2);
+		} else {
+			result = (I_32)VM_VMHelpers::inlineCheckCast(parmClazz, receiverClazz);
 		}
-		return rc;
+		returnSingleFromINL(REGISTER_ARGS, result, 2);
+		return EXECUTE_BYTECODE;
 	}
 
 	/* java.lang.Class: public native boolean isArray(); */
@@ -8847,7 +8841,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_RUN_JNI_NATIVE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_I2J_TRANSITION),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_OBJECT_GET_CLASS),
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ARRAY),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL),
@@ -9306,8 +9300,8 @@ runMethod: {
 		PERFORM_ACTION(inlThreadCurrentThread(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_OBJECT_GET_CLASS):
 		PERFORM_ACTION(inlObjectGetClass(REGISTER_ARGS));
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM):
-		PERFORM_ACTION(inlClassIsAssignableFrom(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM_IMPL):
+		PERFORM_ACTION(inlClassIsAssignableFromImpl(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ARRAY):
 		PERFORM_ACTION(inlClassIsArray(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE):

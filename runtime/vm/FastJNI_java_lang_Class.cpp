@@ -29,25 +29,19 @@
 
 extern "C" {
 
-/* java.lang.Class: public native boolean isAssignableFrom(Class<?> cls); */
+/* java.lang.Class: private native boolean isAssignableFromImpl(Class<?> cls); */
 jboolean JNICALL
-Fast_java_lang_Class_isAssignableFrom(J9VMThread *currentThread, j9object_t receiverObject, j9object_t parmObject)
+Fast_java_lang_Class_isAssignableFromImpl(J9VMThread *currentThread, j9object_t receiverObject, j9object_t parmObject)
 {
 	jboolean result = JNI_FALSE;
-
-	if (NULL == parmObject) {
-		setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-	} else {
-		J9Class *parmClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, parmObject);
-		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, receiverObject);
-		if (J9ROMCLASS_IS_PRIMITIVE_TYPE(parmClazz->romClass) || J9ROMCLASS_IS_PRIMITIVE_TYPE(receiverClazz->romClass)) {
-			if (parmClazz == receiverClazz) {
-				result = JNI_TRUE;
-			}
-		} else {
-			result = (jboolean)VM_VMHelpers::inlineCheckCast(parmClazz, receiverClazz);
+	J9Class *parmClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, parmObject);
+	J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, receiverObject);
+	if (J9ROMCLASS_IS_PRIMITIVE_TYPE(parmClazz->romClass) || J9ROMCLASS_IS_PRIMITIVE_TYPE(receiverClazz->romClass)) {
+		if (parmClazz == receiverClazz) {
+			result = JNI_TRUE;
 		}
-
+	} else {
+		result = (jboolean)VM_VMHelpers::inlineCheckCast(parmClazz, receiverClazz);
 	}
 	return result;
 }
@@ -211,8 +205,9 @@ Fast_java_lang_Class_getComponentType(J9VMThread *currentThread, j9object_t rece
 }
 
 J9_FAST_JNI_METHOD_TABLE(java_lang_Class)
-	J9_FAST_JNI_METHOD("isAssignableFrom", "(Ljava/lang/Class;)Z", Fast_java_lang_Class_isAssignableFrom,
-		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
+	J9_FAST_JNI_METHOD("isAssignableFromImpl", "(Ljava/lang/Class;)Z", Fast_java_lang_Class_isAssignableFromImpl,
+		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
+		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
 	J9_FAST_JNI_METHOD("forNameImpl", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;", Fast_java_lang_Class_forNameImpl,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
 	J9_FAST_JNI_METHOD("isArray", "()Z", Fast_java_lang_Class_isArray,

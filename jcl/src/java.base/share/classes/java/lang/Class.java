@@ -1542,7 +1542,7 @@ Method getMethodHelper(
 			// bestCandidate and result have same declaringClass.
 			Class<?> candidateRetType = bestCandidate.getReturnType();
 			Class<?> resultRetType = result.getReturnType();
-			if ((candidateRetType != resultRetType) && candidateRetType.isAssignableFrom(resultRetType)) {
+			if ((candidateRetType != resultRetType) && candidateRetType.isAssignableFromImpl(resultRetType)) {
 				bestCandidate = result;
 			}
 		}
@@ -1658,7 +1658,7 @@ private HashMap<MethodInfo, MethodInfo> getMethodSet(
 					 */
 					Class<?> prevMIDeclaringClass = prevMI.me.getDeclaringClass();
 					if ((mDeclaringClass.isInterface() && !prevMIDeclaringClass.isInterface())
-						|| (mDeclaringClass.isAssignableFrom(prevMIDeclaringClass))
+						|| (mDeclaringClass.isAssignableFromImpl(prevMIDeclaringClass))
 					) {
 						myMethods.put(prevMI, prevMI);
 					}
@@ -2122,7 +2122,13 @@ public native boolean isArray();
  *					if the parameter is null
  *					
  */
-public native boolean isAssignableFrom(Class<?> cls);
+private native boolean isAssignableFromImpl(Class<?> cls);
+public boolean isAssignableFrom(Class<?> cls) {
+	if (null == cls) {
+		throw new NullPointerException();
+	}
+	return isAssignableFromImpl(cls);
+}
 
 /**
  * Answers true if the argument is non-null and can be
@@ -3013,7 +3019,7 @@ public boolean isAnnotationPresent(Class<? extends Annotation> annotation) {
  * @since 1.5
  */
 public <U> Class<? extends U> asSubclass(Class<U> cls) {
-	if (!cls.isAssignableFrom(this))
+	if (!cls.isAssignableFromImpl(this))
 		throw new ClassCastException(this.toString());
 	return (Class<? extends U>)this;
 }
@@ -3804,7 +3810,7 @@ private class MethodInfo {
 static boolean methodAOverridesMethodB(Class<?> methodAClass,	boolean methodAIsAbstract, boolean methodAClassIsInterface,
 		Class<?> methodBClass, boolean methodBIsAbstract, boolean methodBClassIsInterface) {
 	return (methodBIsAbstract && methodBClassIsInterface && !methodAIsAbstract && !methodAClassIsInterface) ||
-			(methodBClass.isAssignableFrom(methodAClass)
+			(methodBClass.isAssignableFromImpl(methodAClass)
 					/*[IF !Sidecar19-SE]*/
 					/*
 					 * In Java 8, abstract methods in subinterfaces do not hide abstract methods in superinterfaces.
