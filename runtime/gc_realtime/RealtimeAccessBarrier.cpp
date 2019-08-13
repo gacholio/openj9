@@ -410,8 +410,8 @@ MM_RealtimeAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 #endif
 	}
 
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 	if(shouldCopy) {
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 		GC_ArrayObjectModel* indexableObjectModel = &_extensions->indexableObjectModel;
 		I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(arrayObject);
 		UDATA sizeInBytes = indexableObjectModel->getDataSizeInBytes(arrayObject);
@@ -425,15 +425,16 @@ MM_RealtimeAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 			}
 		}
 		vmThread->jniCriticalCopyCount += 1;
-		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
 		// acquire access and return a direct pointer
-		MM_JNICriticalRegion::enterCriticalRegion(vmThread, false);
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
 		data = (void *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
 		if(NULL != isCopy) {
 			*isCopy = JNI_FALSE;
 		}
 	}
+	VM_VMAccess::inlineExitVMToJNI(vmThread);
+
 	return data;
 }
 
@@ -498,17 +499,14 @@ MM_RealtimeAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
 	bool isCompressed = false;
 	bool shouldCopy = false;
-	bool hasVMAccess = false;
+	bool hasVMAccess = true;
 
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 #if !defined(J9VM_GC_ARRAYLETS)
 	if ((javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) {
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-		hasVMAccess = true;
 		shouldCopy = true;
 	} else if (IS_STRING_COMPRESSION_ENABLED_VM(javaVM)) {
 		/* If the string bytes are in compressed UNICODE, then we need to copy to decompress */
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-		hasVMAccess = true;
 		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
 		if (IS_STRING_COMPRESSED(javaVM, stringObject)) {
 			isCompressed = true;
@@ -517,8 +515,6 @@ MM_RealtimeAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 	}
 #else /* J9VM_GC_ARRAYLETS */
 	// For now only copying is supported for arraylets
-	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-	hasVMAccess = true;
 	shouldCopy = true;
 #endif /* J9VM_GC_ARRAYLETS */
 
