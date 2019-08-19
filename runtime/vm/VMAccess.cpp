@@ -595,12 +595,12 @@ void releaseExclusiveVMAccess(J9VMThread * vmThread)
 			vm->omrVM->exclusiveVMAccessStats.requester = NULL;
 			vm->omrVM->exclusiveVMAccessStats.lastResponder = NULL;
 			/* Free any cached decompilation records */
-			PORT_ACCESS_FROM_JAVAVM(vm);
-			j9mem_free_memory(currentThread->lastDecompilation);
-			currentThread->lastDecompilation = NULL;
+//			PORT_ACCESS_FROM_JAVAVM(vm);
+//			j9mem_free_memory(currentThread->lastDecompilation);
+//			currentThread->lastDecompilation = NULL;
 			while ((currentThread = currentThread->linkNext) != vmThread) {
-				j9mem_free_memory(currentThread->lastDecompilation);
-				currentThread->lastDecompilation = NULL;
+//				j9mem_free_memory(currentThread->lastDecompilation);
+//				currentThread->lastDecompilation = NULL;
 				VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
 			}
 			omrthread_monitor_notify_all(vm->exclusiveAccessMutex);

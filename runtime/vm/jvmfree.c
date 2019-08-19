@@ -252,7 +252,18 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 		pool_kill(vmThread->monitorEnterRecordPool);
 	}
 
-	j9mem_free_memory(vmThread->lastDecompilation);
+	while (!J9_LINKED_LIST_IS_EMPTY(vmThread->decomps)) {
+		J9DecompInfo *discard = NULL;
+		J9JITDecompilationInfo *decomp = NULL;
+		J9_LINKED_LIST_REMOVE_FIRST(vmThread->decomps, discard);
+		decomp = discard->decompilationStack;
+		while (NULL != decomp) {
+			J9JITDecompilationInfo *next = decomp->next;
+			j9mem_free_memory(decomp);
+			decomp = next;
+		}
+		j9mem_free_memory(discard);
+	}
 
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
 	if (vmThread->dltBlock.temps != vmThread->dltBlock.inlineTempsBuffer) {

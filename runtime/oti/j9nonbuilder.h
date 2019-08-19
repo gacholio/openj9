@@ -4907,7 +4907,7 @@ typedef struct J9VMThread {
 	UDATA debugEventData7;
 	UDATA debugEventData8;
 	struct J9ClassLoadingStackElement* classLoadingStack;
-	UDATA jitTransitionJumpSlot;
+	struct J9DecompInfo* decomps;
 	omrthread_monitor_t gcClassUnloadingMutex;
 	struct J9VMThread* gcClassUnloadingThreadPrevious;
 	struct J9VMThread* gcClassUnloadingThreadNext;
@@ -5556,6 +5556,23 @@ typedef struct J9JITWatchedStaticFieldData {
 	void *fieldAddress;		/* Address of static field storage */
 	J9Class *fieldClass;	/* Declaring class of static field */
 } J9JITWatchedStaticFieldData;
+
+typedef struct J9DecompInfo {
+	struct J9DecompInfo* linkNext;
+	struct J9DecompInfo* linkPrevious;
+	char *msg;
+	UDATA* arg0EA;
+	UDATA* bytecodes;
+	UDATA* sp;
+	U_8* pc;
+	struct J9Method* literals;
+	UDATA* j2iFrame;
+	struct J9JITDecompilationInfo* currentDecomp;
+	struct J9JITDecompilationInfo* decompilationStack;
+	struct J9VMEntryLocalStorage* entryLocalStorage;
+	struct J9JavaStack* stack;
+	struct J9JavaStack* stackCopy;
+} J9DecompInfo;
 
 /* The C stack frame in which compiled code runs */
 

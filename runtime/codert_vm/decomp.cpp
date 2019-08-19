@@ -37,6 +37,7 @@
 #include "pcstack.h"
 #include "VMHelpers.hpp"
 #include "OMR/Bytes.hpp"
+#include "omrlinkedlist.h"
 
 extern "C" {
 
@@ -142,7 +143,7 @@ static UDATA getPendingStackHeight(J9VMThread *currentThread, U_8 *interpreterPC
 static J9JITDecompilationInfo* jitAddDecompilationForFramePop(J9VMThread * currentThread, J9StackWalkState * walkState);
 static J9JITDecompilationInfo* fetchAndUnstackDecompilationInfo(J9VMThread *currentThread);
 static void fixSavedPC(J9VMThread *currentThread, J9JITDecompilationInfo *decompRecord);
-static void dumpStack(J9VMThread *currentThread, char const *msg);
+static void dumpStack(J9VMThread *currentThread, char const *msg, J9JITDecompilationInfo *currentDecomp);
 static J9ROMNameAndSignature* getNASFromInvoke(U_8 *bytecodePC, J9ROMClass *romClass);
 
 
@@ -221,9 +222,78 @@ fixSavedPC(J9VMThread *currentThread, J9JITDecompilationInfo *decompRecord)
  * @param[in] msg the header message for the stack dump
  */
 static void
-dumpStack(J9VMThread *currentThread, char const *msg)
+dumpStack(J9VMThread *currentThread, char const *msg, J9JITDecompilationInfo *currentDecomp)
 {
 	J9JavaVM *vm = currentThread->javaVM;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9JavaStack *stack = currentThread->stackObject;
+	UDATA stackSize = (UDATA)stack->end - (UDATA)stack;
+	UDATA allocSize = sizeof(J9DecompInfo) + stackSize + strlen(msg) + 1;
+	J9DecompInfo *info = (J9DecompInfo*)j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_JIT);
+	if (NULL == info) {
+		j9tty_printf(PORTLIB, "<%p> !!! Unable to allocate stack copy for: %s\n", currentThread, msg);
+	} else {
+		J9JavaStack *stackCopy = (J9JavaStack*)(info + 1);
+		char *msgCopy = ((char*)stackCopy) + stackSize;
+		memcpy(stackCopy, stack, stackSize);
+		strcpy(msgCopy, msg);
+		info->msg = msgCopy;
+		info->stack = stack;
+		info->stackCopy = stackCopy;
+		info->arg0EA = currentThread->arg0EA;
+		info->sp = currentThread->sp;
+		info->pc = currentThread->pc;
+		info->literals = currentThread->literals;
+		info->j2iFrame = currentThread->j2iFrame;
+		info->currentDecomp = NULL;
+		J9JITDecompilationInfo *current = currentDecomp ? currentDecomp : currentThread->decompilationStack;
+		J9JITDecompilationInfo *decompCopy = NULL;
+		J9JITDecompilationInfo **prev = &decompCopy;
+		while (NULL != current) {
+			UDATA size = sizeof(J9JITDecompilationInfo);
+			J9OSRFrame *frame = (J9OSRFrame*)(current + 1);
+			for (UDATA i = 0; i < current->osrBuffer.numberOfFrames; ++i) {
+				UDATA localSize = osrFrameSize(frame->method);
+				frame = (J9OSRFrame*)(((UDATA)frame) + localSize);
+				size += localSize;
+			}
+			J9JITDecompilationInfo *copy = (J9JITDecompilationInfo*)j9mem_allocate_memory(size, OMRMEM_CATEGORY_JIT);
+			if (NULL == copy) {
+				j9tty_printf(PORTLIB, "<%p> !!! Unable to allocate decomp copy for: %s\n", currentThread, msg);
+				break;
+			}
+			memcpy(copy, current, size);
+			info->currentDecomp = copy;
+			*prev = copy;
+			prev = &(copy->next);
+			current = current->next;
+		}
+		*prev = NULL;
+		if (currentDecomp) {
+			info->currentDecomp = decompCopy;
+			decompCopy = decompCopy->next;
+		}
+		info->decompilationStack = decompCopy;
+		info->entryLocalStorage  = currentThread->entryLocalStorage;
+		J9_LINKED_LIST_ADD_LAST(currentThread->decomps, info);
+		UDATA count = 0;
+		J9DecompInfo *walk = J9_LINKED_LIST_START_DO(currentThread->decomps);
+		while (NULL != walk) {
+			count += 1;
+			walk = J9_LINKED_LIST_NEXT_DO(currentThread->decomps, walk);
+		}
+		if (count > 16) {
+			J9DecompInfo *discard = NULL;
+			J9_LINKED_LIST_REMOVE_FIRST(currentThread->decomps, discard);
+			J9JITDecompilationInfo *decomp = discard->currentDecomp ? discard->currentDecomp : discard->decompilationStack;
+			while (NULL != decomp) {
+				J9JITDecompilationInfo *next = decomp->next;
+				j9mem_free_memory(decomp);
+				decomp = next;
+			}
+			j9mem_free_memory(discard);
+		}
+	}
 	if (NULL != vm->verboseStackDump) {
 		vm->verboseStackDump(currentThread, msg);
 	}
@@ -773,7 +843,7 @@ performDecompile(J9VMThread *currentThread, J9JITDecompileState *decompileState,
 
 	Trc_Decomp_performDecompile_Entry(currentThread);
 
-	dumpStack(currentThread, "before decompilation");
+	dumpStack(currentThread, "before decompilation", decompRecord);
 
 	if (FALSE == decompRecord->usesOSR) {
 		/* Not compiled with OSR - copy stack slots from JIT frame into OSR frame */
@@ -1072,7 +1142,7 @@ fixStackForNewDecompilation(J9VMThread * currentThread, J9StackWalkState * walkS
 	}
 
 	/* Enable stack dump after linking the decompilation into the stack if -verbose:stackwalk=0 is specified */
-	dumpStack(walkState->walkThread, "after fixStackForNewDecompilation");
+	dumpStack(walkState->walkThread, "after fixStackForNewDecompilation", NULL);
 }
 
 
@@ -1200,6 +1270,7 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 	U_8 *jitPC = decompRecord->pc;
 	/* Simulate a call to a resolve helper to make the stack walkable */
 	buildBranchJITResolveFrame(currentThread, jitPC, J9_STACK_FLAGS_JIT_EXCEPTION_CATCH_RESOLVE);
+	dumpStack(currentThread, "before discard", decompRecord);
 	/* Discard the existing decompilation in favour of a new one at the exception catch point */
 	J9OSRBuffer *osrBuffer = &decompRecord->osrBuffer;
 	UDATA numberOfFrames = osrBuffer->numberOfFrames;
@@ -1253,7 +1324,7 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 	UDATA *sp = currentThread->sp - 1;
 	*(j9object_t*)sp = exception;
 	currentThread->sp = sp;
-	dumpStack(currentThread, "after jitDecompileAtExceptionCatch");
+	dumpStack(currentThread, "after jitDecompileAtExceptionCatch", NULL);
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
 }
 
@@ -1290,7 +1361,7 @@ jitDecompileMethodForFramePop(J9VMThread * currentThread, UDATA skipCount)
 	performDecompile(currentThread, &decompileState, decompRecord, osrFrame, numberOfFrames);
 	freeDecompilationRecord(currentThread, decompRecord, TRUE);
 
-	dumpStack(currentThread, "after jitDecompileMethodForFramePop");
+	dumpStack(currentThread, "after jitDecompileMethodForFramePop", NULL);
 }
 
 #endif /* J9VM_INTERP_HOT_CODE_REPLACEMENT (autogen) */
@@ -2211,7 +2282,7 @@ induceOSROnCurrentThread(J9VMThread * currentThread)
 	J9StackWalkState walkState;
 	J9OSRData osrData;
 
-	dumpStack(currentThread, "induceOSROnCurrentThread");
+	dumpStack(currentThread, "induceOSROnCurrentThread", NULL);
 
 	/* The stack currently has a resolve frame on top, followed by the JIT frame we
 	 * wish to OSR.  Walk the stack down to the JIT frame to gather the data required
@@ -2331,7 +2402,7 @@ c_jitDecompileAfterAllocation(J9VMThread *currentThread)
 	*(j9object_t*)sp = obj;
 	currentThread->sp = sp;
 	currentThread->pc += (J9JavaInstructionSizeAndBranchActionTable[*currentThread->pc] & 0x7);
-	dumpStack(currentThread, "after jitDecompileAfterAllocation");
+	dumpStack(currentThread, "after jitDecompileAfterAllocation", NULL);
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
 }
 
@@ -2345,7 +2416,7 @@ c_jitDecompileAtCurrentPC(J9VMThread *currentThread)
 	fixSavedPC(currentThread, decompRecord);
 	/* Decompile the method */
 	jitDecompileMethod(currentThread, decompRecord);
-	dumpStack(currentThread, "after jitDecompileAtCurrentPC");
+	dumpStack(currentThread, "after jitDecompileAtCurrentPC", NULL);
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
 }
 
@@ -2360,7 +2431,7 @@ c_jitDecompileBeforeMethodMonitorEnter(J9VMThread *currentThread)
 	fixSavedPC(currentThread, decompRecord);
 	/* Decompile the method */
 	jitDecompileMethod(currentThread, decompRecord);
-	dumpStack(currentThread, "after jitDecompileBeforeMethodMonitorEnter");
+	dumpStack(currentThread, "after jitDecompileBeforeMethodMonitorEnter", NULL);
 	currentThread->floatTemp1 = (void*)method;
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(enterMethodMonitorFromJIT);
 }
@@ -2376,7 +2447,7 @@ c_jitDecompileBeforeReportMethodEnter(J9VMThread *currentThread)
 	fixSavedPC(currentThread, decompRecord);
 	/* Decompile the method */
 	jitDecompileMethod(currentThread, decompRecord);
-	dumpStack(currentThread, "after jitDecompileBeforeReportMethodEnter");
+	dumpStack(currentThread, "after jitDecompileBeforeReportMethodEnter", NULL);
 	currentThread->floatTemp1 = (void*)method;
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(reportMethodEnterFromJIT);
 }
@@ -2396,13 +2467,13 @@ c_jitDecompileAfterMonitorEnter(J9VMThread *currentThread)
 	 * at bytecode 0 in any verified method).
 	 */
 	if (JBmonitorenter != *currentThread->pc) {
-		dumpStack(currentThread, "after jitDecompileAfterMonitorEnter - inlined sync method");
+		dumpStack(currentThread, "after jitDecompileAfterMonitorEnter - inlined sync method", NULL);
 		currentThread->floatTemp1 = (void*)currentThread->literals;
 		currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(reportMethodEnterFromJIT);
 	} else {
 		/* Advance the PC past the monitorenter and resume execution */
 		currentThread->pc += 1;
-		dumpStack(currentThread, "after jitDecompileAfterMonitorEnter - JBmonitorenter");
+		dumpStack(currentThread, "after jitDecompileAfterMonitorEnter - JBmonitorenter", NULL);
 		currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
 	}
 }
@@ -2422,7 +2493,7 @@ c_jitDecompileOnReturn(J9VMThread *currentThread)
 	memmove(currentThread->sp, &currentThread->returnValue, slots * sizeof(UDATA));
 	/* Advance the PC past the invoke and resume execution */
 	currentThread->pc += 3;
-	dumpStack(currentThread, "after jitDecompileOnReturn");
+	dumpStack(currentThread, "after jitDecompileOnReturn", NULL);
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
 }
 
@@ -2440,6 +2511,7 @@ c_jitReportExceptionCatch(J9VMThread *currentThread)
 	if (J9_BUILDER_SYMBOL(jitDecompileAtExceptionCatch) == jitPC) {
 		currentThread->decompilationStack->pcAddress = (U_8**)&(((J9SFJITResolveFrame*)currentThread->sp)->returnAddress);
 	}
+	dumpStack(currentThread, "jitReportExceptionCatch", NULL);
 	/* Report the event */
 	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_EXCEPTION_CATCH)) {
 		j9object_t exception = ((J9SFJITResolveFrame*)currentThread->sp)->savedJITException;
