@@ -540,27 +540,10 @@ getPendingStackHeight(J9VMThread *currentThread, U_8 *interpreterPC, J9Method *r
 		U_8 bytecode = *interpreterPC;
 		/* Use the stack mapper to determine the pending stack height */
 		pendingStackHeight = (UDATA)vmFuncs->j9stackmap_StackBitsForPC(portLibrary,	offsetPC, romClass, originalROMMethod, NULL, 0, NULL, NULL, NULL);
-		/* All invokes consider their arguments not to be pending - remove the arguments from the pending stack */
-		switch(bytecode) {
-		case JBinvokevirtual:
-		case JBinvokespecial:
-		case JBinvokespecialsplit:
-		case JBinvokeinterface:
-		case JBinvokeinterface2:
-		case JBinvokehandle:
-		case JBinvokehandlegeneric:
-			/* Remove implicit receiver from pending stack */
-			pendingStackHeight -= 1;
-			/* Intentional fall-through */
-		case JBinvokedynamic:
-		case JBinvokestatic:
-		case JBinvokestaticsplit:
-			/* Remove arguments from pending stack */
-			pendingStackHeight -= getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(getNASFromInvoke(interpreterPC, romClass))));
-			break;
-		}
 		/* Reduce the pending stack height for the resolve special cases */
 		switch (resolveFrameType) {
+		case J9_STACK_FLAGS_JIT_INDUCE_OSR_RESOLVE:
+			break;
 		case J9_STACK_FLAGS_JIT_MONITOR_ENTER_RESOLVE:
 			/* Decompile after monitorenter completes.  Remove the object from the pending stack. */
 			pendingStackHeight -= 1;
@@ -576,6 +559,26 @@ getPendingStackHeight(J9VMThread *currentThread, U_8 *interpreterPC, J9Method *r
 				pendingStackHeight -= interpreterPC[3];
 				break;
 			default: /* JBnew - no stacked parameters*/
+				break;
+			}
+		default:
+			/* All invokes consider their arguments not to be pending - remove the arguments from the pending stack */
+			switch(bytecode) {
+			case JBinvokevirtual:
+			case JBinvokespecial:
+			case JBinvokespecialsplit:
+			case JBinvokeinterface:
+			case JBinvokeinterface2:
+			case JBinvokehandle:
+			case JBinvokehandlegeneric:
+				/* Remove implicit receiver from pending stack */
+				pendingStackHeight -= 1;
+				/* Intentional fall-through */
+			case JBinvokedynamic:
+			case JBinvokestatic:
+			case JBinvokestaticsplit:
+				/* Remove arguments from pending stack */
+				pendingStackHeight -= getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(getNASFromInvoke(interpreterPC, romClass))));
 				break;
 			}
 		}
