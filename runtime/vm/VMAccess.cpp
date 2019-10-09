@@ -229,18 +229,6 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 			while ((currentThread = currentThread->linkNext) != vmThread) {
 				omrthread_monitor_enter(currentThread->publicFlagsMutex);
 				VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE , true);
-				/* Because the previous line writes atomically to the same field read below, there is likely
-				 * no barrier required here, but do a full fence to be sure.  The barrier may also be required
-				 * before reading inNative below.
-				 */
-				VM_AtomicSupport::readWriteBarrier();
-				if(currentThread->publicFlags & J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS) {
-					/* Count threads in JNI critical regions who must respond.
-					 * These will respond either by trying to acquire VM access
-					 * or by exiting their outermost critical region.
-					 */
-					jniCriticalResponsesExpected++;
-				}
 				omrthread_monitor_exit(currentThread->publicFlagsMutex);
 			}
 
@@ -261,14 +249,14 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 				 * before reading inNative below.
 				 */
 				VM_AtomicSupport::readWriteBarrier();
-				if(currentThread->publicFlags & J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS) {
+#endif /* !J9VM_INTERP_TWO_PASS_EXCLUSIVE */
+				if (currentThread->publicFlags & J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS) {
 					/* Count threads in JNI critical regions who must respond.
 					 * These will respond either by trying to acquire VM access
 					 * or by exiting their outermost critical region.
 					 */
 					jniCriticalResponsesExpected++;
 				}
-#endif /* !J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 				if (currentThread->inNative) {
 					TRIGGER_J9HOOK_VM_ACQUIRING_EXCLUSIVE_IN_NATIVE(vm->hookInterface, vmThread, currentThread);
