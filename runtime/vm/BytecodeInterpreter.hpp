@@ -758,6 +758,9 @@ done:
 		if (isConstructor) {
 			VM_AtomicSupport::writeBarrier();
 		}
+
+verifyI2J(_currentThread, "returnFromJIT");
+
 		J9I2JState *i2jState = &_currentThread->entryLocalStorage->i2jState;
 		_sp = UNTAG2(i2jState->returnSP, UDATA*) - slotCount;
 		_arg0EA = i2jState->a0;
@@ -801,6 +804,10 @@ done:
 		i2jState->a0 = _arg0EA;
 		i2jState->literals = _literals;
 		i2jState->pc = _pc;
+
+verifyI2J(_currentThread, "jitTransition");
+
+
 		U_32 returnTypeIndex = ((U_32*)jitStartAddress)[-1] & 0xF;
 		void *returnPoint = ((void**)_vm->jitConfig->i2jReturnTable)[returnTypeIndex];
 		// TODO: not loading receiver for I2J
@@ -887,6 +894,9 @@ obj:;
 		j2iFrame->returnAddress = (U_8*)jitReturnAddress;
 		j2iFrame->taggedReturnSP = returnSP;
 		_currentThread->j2iFrame = (UDATA*)&j2iFrame->taggedReturnSP;
+
+verifyI2J(_currentThread, "fillInJ2IValues");
+
 	}
 
 	VMINLINE void
@@ -2146,7 +2156,9 @@ done:
 		 * in the old stack, so does not need to be updated here.
 		 */
 
+verifyI2J(_currentThread, "before native call");
 		ret = callCFunction(REGISTER_ARGS, jniMethodStartAddress, receiverAddress, javaArgs, &bp, isStatic, &returnType);
+verifyI2J(_currentThread, "after native call");
 
 		if (isSynchronized) {
 			j9object_t syncObject = NULL;
@@ -2500,6 +2512,9 @@ ffi_exit:
 			if (NULL != i2jState) {
 				_currentThread->entryLocalStorage->i2jState = *i2jState;
 			}
+
+verifyI2J(_currentThread, "throwException");
+
 			_currentThread->tempSlot = (UDATA)walkState->userData2;
 			_nextAction = J9_BCLOOP_LOAD_PRESERVED_AND_BRANCH;
 			VM_JITInterface::enableRuntimeInstrumentation(_currentThread);
@@ -8558,6 +8573,8 @@ public:
 
 		DEBUG_MUST_HAVE_VM_ACCESS(vmThread);
 
+verifyI2J(_currentThread, "interp entry");
+
 #if defined(COUNT_BYTECODE_PAIRS)
 		U_8 previousBytecode = JBinvokedynamic;
 #define RECORD_BYTECODE_PAIR(number) \
@@ -10423,6 +10440,9 @@ noUpdate:
 			break;
 		}
 #endif
+
+verifyI2J(_currentThread, "interp exit");
+
 		return _nextAction;
 	}
 

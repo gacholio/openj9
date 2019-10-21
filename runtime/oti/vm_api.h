@@ -4296,6 +4296,9 @@ throwNativeOOMError(JNIEnv *env, U_32 moduleName, U_32 messageNumber);
 void
 throwNewJavaIoIOException(JNIEnv *env, const char *message);
 
+void
+verifyI2J(J9VMThread *currentThread, const char *reason);
+
 #ifdef __cplusplus
 }
 #endif

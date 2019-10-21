@@ -201,6 +201,8 @@ retry:
 
 	currentThread->jitStackFrameFlags = 0;
 
+currentThread->javaVM->internalVMFunctionsverifyI2J(currentThread, "DLT");
+
 	/* Drop any monitor enter records for the frame which is being DLTed */
 
 	enterRecord = currentThread->monitorEnterRecords;

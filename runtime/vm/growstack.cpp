@@ -253,6 +253,9 @@ poolElementAllocFailed:
 		freeJavaStack(vmThread->javaVM, oldStack);
 	}
 
+
+verifyI2J(vmThread, "growJavaStack");
+
 	Trc_VM_growJavaStack_Success(vmThread);
 
 done:
