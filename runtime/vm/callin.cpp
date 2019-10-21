@@ -288,6 +288,7 @@ static VMINLINE bool
 buildCallInStackFrame(J9VMThread *currentThread, J9VMEntryLocalStorage *newELS, bool returnsObject = false, bool releaseVMAccess = false)
 {
 	Assert_VM_mustHaveVMAccess(currentThread);
+	memset(newELS, -1, sizeof(*newELS));
 	bool success = true;
 	J9VMEntryLocalStorage *oldELS = currentThread->entryLocalStorage;
 	UDATA flags = 0;

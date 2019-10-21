@@ -102,7 +102,7 @@ prepareForExceptionThrow(J9VMThread *currentThread)
 void
 verifyI2J(J9VMThread *currentThread, const char *reason)
 {
-	if (currentThread->j2iFrame) {
+	if (currentThread->entryLocalStorage->i2jState.pc != (U_8*)(UDATA)-1) {
 		PORT_ACCESS_FROM_VMC(currentThread);
 		UDATA bad = 0;
 		UDATA* returnSP = currentThread->entryLocalStorage->i2jState.returnSP;
