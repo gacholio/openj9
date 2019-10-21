@@ -26,6 +26,8 @@
 #include "rommeth.h"
 #include "stackwalk.h"
 #include "ut_j9vm.h"
+#include "vm_internal.h"
+#include "vm_api.h"
 
 UDATA  
 dropPendingSendPushes(J9VMThread *currentThread)
@@ -112,7 +114,7 @@ verifyI2J(J9VMThread *currentThread, const char *reason)
 		UDATA *stackEnd = stack->end;
 		UDATA *untaggedSP = UNTAG2(returnSP, UDATA*);
 		J9ClassLoader *cl = NULL;
-		J9ROMClass *romClass = zfindROMClassFromPC(currentThread, pc, &cl);
+		J9ROMClass *romClass = findROMClassFromPC(currentThread, pc, &cl);
 
 		if (pc == (UDATA)currentThread->javaVM->callInReturnPC) {
 			return;
@@ -126,7 +128,7 @@ verifyI2J(J9VMThread *currentThread, const char *reason)
 			bad = 1;
 		}
 		if(romClass) {
-			J9ROMMethod *romMethod = zfindROMMethodInROMClass(currentThread, romClass, pc);
+			J9ROMMethod *romMethod = findROMMethodInROMClass(currentThread, romClass, pc);
 			if (romMethod != NULL) {
 				J9ROMMethod *expected = J9_ROM_METHOD_FROM_RAM_METHOD(literals);
 				if (romMethod != expected) {
