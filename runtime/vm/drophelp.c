@@ -24,6 +24,7 @@
 #include "bcnames.h"
 #include "j9consts.h"
 #include "rommeth.h"
+#include "stackwalk.h"
 #include "ut_j9vm.h"
 
 UDATA  
