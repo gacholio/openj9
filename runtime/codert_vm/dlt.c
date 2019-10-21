@@ -201,7 +201,7 @@ retry:
 
 	currentThread->jitStackFrameFlags = 0;
 
-currentThread->javaVM->internalVMFunctionsverifyI2J(currentThread, "DLT");
+currentThread->javaVM->internalVMFunctions->verifyI2J(currentThread, "DLT");
 
 	/* Drop any monitor enter records for the frame which is being DLTed */
 
