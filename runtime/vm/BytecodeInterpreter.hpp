@@ -766,7 +766,7 @@ verifyI2J(_currentThread, "returnFromJIT");
 		_arg0EA = i2jState->a0;
 		_literals= i2jState->literals;
 		_pc = i2jState->pc + 3;
-		memset(i2jState, -1, sizeof(*i2jState);
+		memset(i2jState, -1, sizeof(*i2jState));
 		memmove(_sp, &_currentThread->floatTemp1, sizeof(UDATA) * slotCount);
 		_currentThread->jitStackFrameFlags = 0;
 #if defined(TRACE_TRANSITIONS)
