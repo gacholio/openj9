@@ -116,7 +116,7 @@ verifyI2J(J9VMThread *currentThread, const char *reason)
 		J9ClassLoader *cl = NULL;
 		J9ROMClass *romClass = findROMClassFromPC(currentThread, pc, &cl);
 
-		if (pc == (UDATA)currentThread->javaVM->callInReturnPC) {
+		if ((pc == (UDATA)currentThread->javaVM->callInReturnPC) || (pc == (UDATA)currentThread->javaVM->callInReturnPC+3)) {
 			return;
 		}
 		if ((untaggedSP < stackStart) || (untaggedSP >= stackEnd)) {
