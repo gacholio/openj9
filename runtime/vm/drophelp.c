@@ -114,11 +114,15 @@ verifyI2J(J9VMThread *currentThread, const char *reason)
 		UDATA *stackEnd = stack->end;
 		UDATA *untaggedSP = UNTAG2(returnSP, UDATA*);
 		J9ClassLoader *cl = NULL;
-		J9ROMClass *romClass = findROMClassFromPC(currentThread, pc, &cl);
+		J9ROMClass *romClass = NULL;
 
 		if ((pc == (UDATA)currentThread->javaVM->callInReturnPC) || (pc == (UDATA)currentThread->javaVM->callInReturnPC+3)) {
 			return;
 		}
+		if (pc <= J9SF_MAX_SPECIAL_FRAME_TYPE) {
+			return;
+		}
+
 		if ((untaggedSP < stackStart) || (untaggedSP >= stackEnd)) {
 			j9tty_printf(PORTLIB, "returnSP outside of stack range\n");
 			bad = 1;
@@ -127,6 +131,7 @@ verifyI2J(J9VMThread *currentThread, const char *reason)
 			j9tty_printf(PORTLIB, "a0 outside of stack range\n");
 			bad = 1;
 		}
+		romClass = findROMClassFromPC(currentThread, pc, &cl);
 		if(romClass) {
 			J9ROMMethod *romMethod = findROMMethodInROMClass(currentThread, romClass, pc);
 			if (romMethod != NULL) {
@@ -140,8 +145,10 @@ verifyI2J(J9VMThread *currentThread, const char *reason)
 				j9tty_printf(PORTLIB, "romMethod for PC cannot be located\n");
 			}
 		} else {
-			bad = 1;
-			j9tty_printf(PORTLIB, "romClass for PC cannot be located\n");
+			if (NULL == currentThread->javaVM->sharedClassConfig) {
+				bad = 1;
+				j9tty_printf(PORTLIB, "romClass for PC cannot be located\n");
+			}
 		}
 		if (bad) {
 			j9tty_printf(PORTLIB, "<%p> (%s) Bad I2J detected (returnSP %p a0 %p literals %p pc %p) - crashing to produce diagnostics\n", currentThread, reason, returnSP, a0, literals, pc);
