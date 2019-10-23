@@ -145,7 +145,7 @@ verifyI2J(J9VMThread *currentThread, const char *reason)
 				j9tty_printf(PORTLIB, "romMethod for PC cannot be located\n");
 			}
 		} else {
-			if (NULL == currentThread->javaVM->sharedClassConfig) {
+			if (0) {
 				bad = 1;
 				j9tty_printf(PORTLIB, "romClass for PC cannot be located\n");
 			}
