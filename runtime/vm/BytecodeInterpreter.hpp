@@ -803,7 +803,7 @@ done:
 		i2jState->pc = _pc;
 		if (!IS_SPECIAL_FRAME_PC(_pc)) {
 			if ((*_pc != 0xFF) && (*_pc != 0xFE)) {
-				if ((pc[0] != JBinvokestatic) || (pc[1] != 0) || (pc[2] != 0)) {
+				if ((_pc[0] != JBinvokestatic) || (_pc[1] != 0) || (_pc[2] != 0)) {
 					J9ClassLoader *cl = NULL;
 					if (NULL == findROMClassFromPC(_currentThread, (UDATA)_pc, &cl)) {
 						PORT_ACCESS_FROM_VMC(_currentThread);
