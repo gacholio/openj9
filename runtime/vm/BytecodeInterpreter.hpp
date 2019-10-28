@@ -801,6 +801,16 @@ done:
 		i2jState->a0 = _arg0EA;
 		i2jState->literals = _literals;
 		i2jState->pc = _pc;
+		if (!IS_SPECIAL_FRAME_PC(_pc)) {
+			if ((*_pc != 0xFF) && (*_pc != 0xFE)) {
+				J9ClassLoader *cl = NULL;
+				if (NULL == findROMClassFromPC(_currentThread, (UDATA)_pc, &cl)) {
+					PORT_ACCESS_FROM_VMC(_currentThread);
+					j9tty_printf(PORTLIB, "<%p> bad pc %p method %p\n", _currenThread, _pc, _literals);
+					*(UDATA*)-1=-1;
+				}
+			}
+		}
 		U_32 returnTypeIndex = ((U_32*)jitStartAddress)[-1] & 0xF;
 		void *returnPoint = ((void**)_vm->jitConfig->i2jReturnTable)[returnTypeIndex];
 		// TODO: not loading receiver for I2J
