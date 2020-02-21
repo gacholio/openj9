@@ -310,7 +310,7 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 			/* Corner case where there's only one arraylet leaf */
 			} else if (indexableObjectModel->isArrayletDataContiguous(arrayObject)) {
 				/* Solo arraylet leaf is contiguous so we can simply return the data associated with it */
-				MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
+				MM_JNICriticalRegion::enterCriticalRegion(vmThread);
 				Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
 				GC_SlotObject objectSlot(env->getOmrVM(), arrayoidPtr);
 				data = objectSlot.readReferenceFromSlot();
@@ -328,7 +328,7 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 		}
 	} else {
 		// acquire access and return a direct pointer
-		MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
 		Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
 		arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
 		data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
@@ -405,7 +405,7 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 				if (elems != data) {
 					Trc_MM_JNIReleasePrimitiveArrayCritical_invalid(vmThread, arrayObject, elems, data);
 				}
-				MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
+				MM_JNICriticalRegion::exitCriticalRegion(vmThread);
 			} else {
 				/* Possible to reach here if arraylet leaf has one leaf and no elements in it */
 				Assert_MM_true((1 == indexableObjectModel->numArraylets(arrayObject)) && (0 == indexableObjectModel->getSizeInElements(arrayObject)));
@@ -430,7 +430,7 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 		Assert_MM_true((*criticalCount) > 0);
 		MM_AtomicOperations::subtract(criticalCount, 1);
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)*/
-		MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
 	}
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 }
@@ -492,7 +492,7 @@ MM_VLHGCAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str, j
 		vmThread->jniCriticalCopyCount += 1;
 	} else {
 		// acquire access and return a direct pointer
-		MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
 		Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
 		data = (jchar*)_extensions->indexableObjectModel.getDataPointerForContiguous(valueObject);
 
@@ -548,7 +548,7 @@ MM_VLHGCAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring st
 		Assert_MM_true((*criticalCount) > 0);
 		MM_AtomicOperations::subtract(criticalCount, 1);
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)*/
-		MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
 	}
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 }

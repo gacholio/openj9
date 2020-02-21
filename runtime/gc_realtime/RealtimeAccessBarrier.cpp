@@ -396,8 +396,9 @@ MM_RealtimeAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 		shouldCopy = true;
 	}
 
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+
 	if(shouldCopy) {
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 		GC_ArrayObjectModel* indexableObjectModel = &_extensions->indexableObjectModel;
 		I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(arrayObject);
 		UDATA sizeInBytes = indexableObjectModel->getDataSizeInBytes(arrayObject);
@@ -411,15 +412,16 @@ MM_RealtimeAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 			}
 		}
 		vmThread->jniCriticalCopyCount += 1;
-		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
 		// acquire access and return a direct pointer
-		MM_JNICriticalRegion::enterCriticalRegion(vmThread, false);
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
 		data = (void *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
 		if(NULL != isCopy) {
 			*isCopy = JNI_FALSE;
 		}
 	}
+
+	VM_VMAccess::inlineExitVMToJNI(vmThread);
 	return data;
 }
 
@@ -438,8 +440,9 @@ MM_RealtimeAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 		shouldCopy = true;
 	}
 
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+
 	if(shouldCopy) {
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 		if(JNI_ABORT != mode) {
 			GC_ArrayObjectModel* indexableObjectModel = &_extensions->indexableObjectModel;
 			I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(arrayObject);
@@ -457,8 +460,6 @@ MM_RealtimeAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 		} else {
 			Assert_MM_invalidJNICall();
 		}
-
-		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
 		/*
 		 * Objects can not be moved if critical section is active
@@ -469,8 +470,10 @@ MM_RealtimeAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 			Trc_MM_JNIReleasePrimitiveArrayCritical_invalid(vmThread, arrayObject, elems, data);
 		}
 
-		MM_JNICriticalRegion::exitCriticalRegion(vmThread, false);
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
 	}
+
+	VM_VMAccess::inlineExitVMToJNI(vmThread);
 }
 
 const jchar*
@@ -480,13 +483,9 @@ MM_RealtimeAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
 	bool isCompressed = false;
-	bool shouldCopy = false;
-	bool hasVMAccess = false;
+	bool shouldCopy = true; /* For now only copying is supported for arraylets */
 
-	/* For now only copying is supported for arraylets */
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-	hasVMAccess = true;
-	shouldCopy = true;
 
 	if (shouldCopy) {
 		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
@@ -523,7 +522,7 @@ MM_RealtimeAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 		vmThread->jniCriticalCopyCount += 1;
 	} else {
 		// acquire access and return a direct pointer
-		MM_JNICriticalRegion::enterCriticalRegion(vmThread, hasVMAccess);
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
 		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
 		J9IndexableObject *valueObject = (J9IndexableObject*)J9VMJAVALANGSTRING_VALUE(vmThread, stringObject);
 
@@ -533,9 +532,8 @@ MM_RealtimeAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 			*isCopy = JNI_FALSE;
 		}
 	}
-	if (hasVMAccess) {
-		VM_VMAccess::inlineExitVMToJNI(vmThread);
-	}
+
+	VM_VMAccess::inlineExitVMToJNI(vmThread);
 	return data;
 }
 
@@ -544,11 +542,9 @@ MM_RealtimeAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
-	bool hasVMAccess = false;
-	bool shouldCopy = false;
+	bool shouldCopy = true; /* For now only copying is supported for arraylets */
 
-	/* For now only copying is supported for arraylets */
-	shouldCopy = true;
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 
 	if (shouldCopy) {
 		// String data is not copied back
@@ -561,12 +557,10 @@ MM_RealtimeAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring
 		}
 	} else {
 		// direct pointer, just drop access
-		MM_JNICriticalRegion::exitCriticalRegion(vmThread, hasVMAccess);
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
 	}
 
-	if (hasVMAccess) {
-		VM_VMAccess::inlineExitVMToJNI(vmThread);
-	}
+	VM_VMAccess::inlineExitVMToJNI(vmThread);
 }
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)

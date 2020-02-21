@@ -55,14 +55,17 @@ public:
 	 * Once a thread has successfully entered a critical region, it has privileges similar
 	 * to holding VM access. No object can move while any thread is in a critical region.
 	 *
+	 * The current thread must have entered the VM (i.e. have VM access)
+	 *
 	 * @param vmThread     the J9VMThread requesting to enter a critical region
-	 * @param hasVMAccess  true if caller has acquired VM access, false if not
 	 */
 	static MMINLINE void
-	enterCriticalRegion(J9VMThread* vmThread, bool hasVMAccess)
+	enterCriticalRegion(J9VMThread* vmThread)
 	{
 		if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_DEBUG_VM_ACCESS)) {
 			Assert_MM_true(J9_VM_FUNCTION(vmThread, currentVMThread)(vmThread->javaVM) == vmThread);
+			Assert_MM_mustHaveVMAccess(vmThread);
+			Assert_MM_false(vmThread->inNative); 
 		}
 
 		/* Handle nested case first to avoid the unnecessary atomic */
@@ -71,11 +74,7 @@ public:
 			vmThread->jniCriticalDirectCount += 1;
 	  	} else {
 			UDATA const criticalFlags = J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS;
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 			UDATA const expectedFlags = J9_PUBLIC_FLAGS_VM_ACCESS;
-#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
-			UDATA const expectedFlags = hasVMAccess ? J9_PUBLIC_FLAGS_VM_ACCESS : 0;
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			/* Expected case: swap in JNI access bits */
 			if (expectedFlags == VM_AtomicSupport::lockCompareExchange(&vmThread->publicFlags, expectedFlags, expectedFlags | criticalFlags)) {
 				/* First entry into a critical region */
@@ -84,33 +83,20 @@ public:
 				omrthread_t const osThread = vmThread->osThread;
 				omrthread_monitor_t const publicFlagsMutex = vmThread->publicFlagsMutex;
 				omrthread_monitor_enter_using_threadId(publicFlagsMutex, osThread);
-				if (hasVMAccess) {
-					/* Entering the first critical region with VM access; set the critical flags */
-					VM_VMAccess::setPublicFlags(vmThread, criticalFlags);
-					vmThread->jniCriticalDirectCount = 1;
+				/* Entering the first critical region with VM access; set the critical flags */
+				VM_VMAccess::setPublicFlags(vmThread, criticalFlags);
+				vmThread->jniCriticalDirectCount = 1;
 
-					/* The current thread has VM access and just acquired JNI critical access.
-					 * If an exclusive request is in progress and the current thread has already
-					 * been requested to halt, then adjust the JNI response count accordingly.
-					 */
-					if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)) {
-						J9JavaVM* const vm = vmThread->javaVM;
-						omrthread_monitor_t const exclusiveAccessMutex = vm->exclusiveAccessMutex;
-						omrthread_monitor_enter_using_threadId(exclusiveAccessMutex, osThread);
-						vm->jniCriticalResponseCount += 1;
-						omrthread_monitor_exit_using_threadId(exclusiveAccessMutex, osThread);
-					}
-				} else {
-					/* Entering the first critical region; acquire VM access and set the critical flags */
-					if (0 == VM_AtomicSupport::lockCompareExchange(&vmThread->publicFlags, 0, criticalFlags)) {
-						/* Set the count to 1 */
-						vmThread->jniCriticalDirectCount = 1;
-					} else {
-						J9_VM_FUNCTION(vmThread, internalEnterVMFromJNI)(vmThread);
-						VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS);
-						vmThread->jniCriticalDirectCount = 1;
-						J9_VM_FUNCTION(vmThread, internalExitVMToJNI)(vmThread);
-					}
+				/* The current thread has VM access and just acquired JNI critical access.
+				 * If an exclusive request is in progress and the current thread has already
+				 * been requested to halt, then adjust the JNI response count accordingly.
+				 */
+				if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)) {
+					J9JavaVM* const vm = vmThread->javaVM;
+					omrthread_monitor_t const exclusiveAccessMutex = vm->exclusiveAccessMutex;
+					omrthread_monitor_enter_using_threadId(exclusiveAccessMutex, osThread);
+					vm->jniCriticalResponseCount += 1;
+					omrthread_monitor_exit_using_threadId(exclusiveAccessMutex, osThread);
 				}
 				omrthread_monitor_exit_using_threadId(publicFlagsMutex, osThread);
 			}
@@ -122,25 +108,24 @@ public:
 	 * Once a thread has successfully exited a critical region, objects in the java
 	 * heap are allowed to move again.
 	 *
+	 * The current thread must have entered the VM (i.e. have VM access)
+	 *
 	 * @param vmThread     the J9VMThread requesting to exit a critical region
-	 * @param hasVMAccess  true if caller has acquired VM access, false if not
 	 */
 	static MMINLINE void
-	exitCriticalRegion(J9VMThread* vmThread, bool hasVMAccess)
+	exitCriticalRegion(J9VMThread* vmThread)
 	{
 		if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_DEBUG_VM_ACCESS)) {
 			Assert_MM_true(J9_VM_FUNCTION(vmThread, currentVMThread)(vmThread->javaVM) == vmThread);
+			Assert_MM_mustHaveVMAccess(vmThread);
+			Assert_MM_false(vmThread->inNative); 
 		}
 
 		Assert_MM_mustHaveJNICriticalRegion(vmThread);
 		if (--vmThread->jniCriticalDirectCount == 0) {
 			/* Exiting last critical region, swap out critical flags */
 			UDATA const criticalFlags = J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS;
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 			UDATA const finalFlags = J9_PUBLIC_FLAGS_VM_ACCESS;
-#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
-			UDATA const finalFlags = hasVMAccess ? J9_PUBLIC_FLAGS_VM_ACCESS : 0;
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			UDATA const jniAccess = criticalFlags | finalFlags;
 			if (jniAccess != VM_AtomicSupport::lockCompareExchange(&vmThread->publicFlags, jniAccess, finalFlags)) {
 				/* Exiting the last critical region; clear the critical flags.
