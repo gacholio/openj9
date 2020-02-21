@@ -338,7 +338,7 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 		MM_AtomicOperations::add(criticalCount, 1);
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)*/
 	}
-	VM_VMAccess::inlineExitVMToJNI(vmThread);
+	VM_VMAccess::inlineExitVMToJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 	return data;
 }
 
@@ -372,7 +372,7 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
-	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 	GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
 
 	J9IndexableObject *arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
@@ -505,7 +505,7 @@ MM_VLHGCAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str, j
 		MM_AtomicOperations::add(criticalCount, 1);
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)*/
 	}
-	VM_VMAccess::inlineExitVMToJNI(vmThread);
+	VM_VMAccess::inlineExitVMToJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 	return data;
 }
 
@@ -514,7 +514,7 @@ MM_VLHGCAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring st
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
-	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 
 	J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
 	J9IndexableObject *valueObject = (J9IndexableObject*)J9VMJAVALANGSTRING_VALUE(vmThread, stringObject);

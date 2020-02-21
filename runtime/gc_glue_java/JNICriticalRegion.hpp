@@ -36,6 +36,9 @@
 #include "BaseNonVirtual.hpp"
 #include "VMAccess.hpp"
 
+#define J9_JNI_CRITICAL_FLAGS (J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS)
+#define J9_EXPECTED_CRITICAL_FLAGS (J9_PUBLIC_FLAGS_VM_ACCESS | J9_JNI_CRITICAL_FLAGS)
+
 class MM_JNICriticalRegion : public MM_BaseNonVirtual
 {
 	/* data members */
@@ -73,7 +76,7 @@ public:
 			/* Nested critical region; increment the count */
 			vmThread->jniCriticalDirectCount += 1;
 	  	} else {
-			UDATA const criticalFlags = J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS;
+			UDATA const criticalFlags = J9_JNI_CRITICAL_FLAGS;
 			UDATA const expectedFlags = J9_PUBLIC_FLAGS_VM_ACCESS;
 			/* Expected case: swap in JNI access bits */
 			if (expectedFlags == VM_AtomicSupport::lockCompareExchange(&vmThread->publicFlags, expectedFlags, expectedFlags | criticalFlags)) {
@@ -124,7 +127,7 @@ public:
 		Assert_MM_mustHaveJNICriticalRegion(vmThread);
 		if (--vmThread->jniCriticalDirectCount == 0) {
 			/* Exiting last critical region, swap out critical flags */
-			UDATA const criticalFlags = J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS;
+			UDATA const criticalFlags = J9_JNI_CRITICAL_FLAGS;
 			UDATA const finalFlags = J9_PUBLIC_FLAGS_VM_ACCESS;
 			UDATA const jniAccess = criticalFlags | finalFlags;
 			if (jniAccess != VM_AtomicSupport::lockCompareExchange(&vmThread->publicFlags, jniAccess, finalFlags)) {

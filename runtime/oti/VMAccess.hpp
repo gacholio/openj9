@@ -333,7 +333,7 @@ public:
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 
 	static VMINLINE void
-	inlineEnterVMFromJNI(J9VMThread* const currentThread)
+	inlineEnterVMFromJNI(J9VMThread* const currentThread, UDATA expectedFlags = J9_PUBLIC_FLAGS_VM_ACCESS)
 	{
 		currentThread->inNative = FALSE;
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
@@ -341,13 +341,13 @@ public:
 #else /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 		VM_AtomicSupport::readWriteBarrier(); // necessary?
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
-		if (J9_UNEXPECTED(currentThread->publicFlags != J9_PUBLIC_FLAGS_VM_ACCESS))	{
+		if (J9_UNEXPECTED(currentThread->publicFlags != expectedFlags))	{
 			J9_VM_FUNCTION(currentThread, internalEnterVMFromJNI)(currentThread);
 		}
 	}
 
 	static VMINLINE void
-	inlineExitVMToJNI(J9VMThread* const currentThread)
+	inlineExitVMToJNI(J9VMThread* const currentThread, UDATA expectedFlags = J9_PUBLIC_FLAGS_VM_ACCESS)
 	{
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
 		VM_AtomicSupport::compilerReorderingBarrier();
@@ -358,7 +358,7 @@ public:
 		currentThread->inNative = TRUE;
 		VM_AtomicSupport::readWriteBarrier(); // necessary?
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
-		if (J9_UNEXPECTED(currentThread->publicFlags != J9_PUBLIC_FLAGS_VM_ACCESS)) {
+		if (J9_UNEXPECTED(currentThread->publicFlags != expectedFlags)) {
 			J9_VM_FUNCTION(currentThread, internalExitVMToJNI)(currentThread);
 		}
 	}

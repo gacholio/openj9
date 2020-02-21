@@ -417,7 +417,7 @@ MM_StandardAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 		}
 	}
 
-	VM_VMAccess::inlineExitVMToJNI(vmThread);
+	VM_VMAccess::inlineExitVMToJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 	return data;
 }
 
@@ -433,7 +433,7 @@ MM_StandardAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 		shouldCopy = true;
 	}
 
-	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 
 	if(shouldCopy) {
 		if(JNI_ABORT != mode) {
@@ -540,7 +540,7 @@ MM_StandardAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 		}
 	}
 
-	VM_VMAccess::inlineExitVMToJNI(vmThread);
+	VM_VMAccess::inlineExitVMToJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 	return data;
 }
 
@@ -551,7 +551,7 @@ MM_StandardAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring
 	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
 	bool shouldCopy = false;
 
-	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 
 	if ((javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) {
 		shouldCopy = true;

@@ -421,7 +421,7 @@ MM_RealtimeAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 		}
 	}
 
-	VM_VMAccess::inlineExitVMToJNI(vmThread);
+	VM_VMAccess::inlineExitVMToJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 	return data;
 }
 
@@ -440,7 +440,7 @@ MM_RealtimeAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 		shouldCopy = true;
 	}
 
-	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 
 	if(shouldCopy) {
 		if(JNI_ABORT != mode) {
@@ -533,7 +533,7 @@ MM_RealtimeAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 		}
 	}
 
-	VM_VMAccess::inlineExitVMToJNI(vmThread);
+	VM_VMAccess::inlineExitVMToJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 	return data;
 }
 
@@ -544,7 +544,7 @@ MM_RealtimeAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring
 	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
 	bool shouldCopy = true; /* For now only copying is supported for arraylets */
 
-	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread, J9_EXPECTED_CRITICAL_FLAGS);
 
 	if (shouldCopy) {
 		// String data is not copied back
