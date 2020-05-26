@@ -191,11 +191,11 @@ MM_IndexableObjectAllocationModel::layoutContiguousArraylet(MM_EnvironmentBase *
 		leafOffset = MM_Math::roundToCeiling(sizeof(uint64_t), leafOffset);
 	}
 	uintptr_t arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+	GC_SlotObject slotObject(env->getOmrVM(), arrayoidPtr);
 	for (uintptr_t i = 0; i < _numberOfArraylets; i++) {
-		GC_SlotObject slotObject(env->getOmrVM(), arrayoidPtr);
 		slotObject.writeReferenceToSlot((omrobjectptr_t)leafOffset);
 		leafOffset += arrayletLeafSize;
-		arrayoidPtr = GC_SlotObject::addToSlotAddress(arrayoidPtr, 1, compressed);
+		slotObject.addToSlotAddress(1);
 	}
 
 	return spine;
