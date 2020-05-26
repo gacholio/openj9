@@ -459,16 +459,14 @@ public:
 			UDATA* destData = (UDATA*)getDataPointerForContiguous(destObject);
 			copyInWords(destData, srcData, sizeInBytes);
 		} else {
-			bool const compressed = compressObjectReferences();
 			UDATA arrayletCount = numArraylets(srcObject);
-			fj9object_t *srcArraylets = getArrayoidPointer(srcObject);
-			fj9object_t *destArraylets = getArrayoidPointer(destObject);
+			GC_SlotObject srcSlotObject(_omrVM, getArrayoidPointer(srcObject));
+			GC_SlotObject destSlotObject(_omrVM, getArrayoidPointer(destObject));
 			for (UDATA i = 0; i < arrayletCount; i++) {
-				GC_SlotObject srcSlotObject(_omrVM, GC_SlotObject::addToSlotAddress(srcArraylets, i, compressed));
-				GC_SlotObject destSlotObject(_omrVM, GC_SlotObject::addToSlotAddress(destArraylets, i, compressed));
 				void* srcLeafAddress = srcSlotObject.readReferenceFromSlot();
+				srcSlotObject.addToSlotAddress(1);
 				void* destLeafAddress = destSlotObject.readReferenceFromSlot();
-				
+				destSlotObject.addToSlotAddress(1);
 
 				UDATA copySize = _omrVM->_arrayletLeafSize;
 				

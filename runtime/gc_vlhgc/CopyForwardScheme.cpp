@@ -2226,7 +2226,6 @@ MM_CopyForwardScheme::scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *en
 MMINLINE bool
 MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr) {
 	bool success = true;
-	fj9object_t *endScanPtr;
 	UDATA *descriptionPtr;
 	UDATA descriptionBits;
 	UDATA descriptionIndex;
@@ -2234,13 +2233,11 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 	UDATA *leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 	UDATA leafBits;
 #endif /* J9VM_GC_LEAF_BITS */
-	bool const compressed = env->compressObjectReferences();
 
 	/* Object slots */
-	volatile fj9object_t* scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 	UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
+	UDATA slotCount = objectSize / env->referenceSize();
 
-	endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
 	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceDescription;
 
 	if (((UDATA)descriptionPtr) & 1) {
@@ -2256,12 +2253,11 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 	}
 	descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 
-	while (success && (scanPtr < endScanPtr)) {
+	GC_SlotObject slotObject(_javaVM->omrVM, _extensions->mixedObjectModel.getHeadlessObject(objectPtr));
+	while (success && (0 != slotCount)) {
 		/* Determine if the slot should be processed */
 		if (descriptionBits & 1) {
-			GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
-
-		/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
+			/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
 #if defined(J9VM_GC_LEAF_BITS)
 			success = copyAndForward(env, reservingContext, objectPtr, &slotObject, 1 == (leafBits & 1));
 #else /* J9VM_GC_LEAF_BITS */
@@ -2279,7 +2275,8 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 #endif /* J9VM_GC_LEAF_BITS */
 			descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 		}
-		scanPtr = GC_SlotObject::addToSlotAddress((fomrobject_t*)scanPtr, 1, compressed);
+		slotObject.addToSlotAddress(1);
+		slotCount -= 1;
 	}
 	return success;
 }
