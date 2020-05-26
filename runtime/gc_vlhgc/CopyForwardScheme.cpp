@@ -2048,18 +2048,16 @@ MM_CopyForwardScheme::copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationCo
 		UDATA instanceLeafDescription = (UDATA)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 		/* For now we only support leaf children in small objects. If the leaf description isn't immediate, ignore it to keep the code simple. */
 		if (1 == (instanceLeafDescription & 1)) {
-			bool const compressed = env->compressObjectReferences();
-			fj9object_t* scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 			UDATA leafBits = instanceLeafDescription >> 1;
+			GC_SlotObject slotObject(_javaVM->omrVM, _extensions->mixedObjectModel.getHeadlessObject(objectPtr));
 			while (0 != leafBits) {
 				if (1 == (leafBits & 1)) {
 					/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
-					GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
 					/* pass leaf flag into copy method for optimizing abort case and hybrid case (don't need to push leaf object in work stack) */
 					copyAndForward(env, reservingContext, objectPtr, &slotObject, true);
 				}
 				leafBits >>= 1;
-				scanPtr = GC_SlotObject::addToSlotAddress(scanPtr, 1, compressed);
+				slotObject.addToSlotAddress(1);
 			}
 		}
 	}
