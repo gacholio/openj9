@@ -36,6 +36,7 @@
 void
 MM_JNICriticalRegion::reacquireAccess(J9VMThread* vmThread, UDATA accessMask)
 {
+	Trc_MM_reacquireAccess_Entry(vmThread, accessMask);
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 	// Current thread must have entered the VM before acquiring exclusive
 	Assert_MM_false(vmThread->inNative);
@@ -49,6 +50,7 @@ MM_JNICriticalRegion::reacquireAccess(J9VMThread* vmThread, UDATA accessMask)
 	omrthread_monitor_enter(vmThread->publicFlagsMutex);
 	Assert_MM_true(0 == (vmThread->publicFlags & (J9_PUBLIC_FLAGS_VM_ACCESS | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS)));
 	while (vmThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_ANY) {
+		Trc_MM_reacquireAccess_wait(vmThread, vmThread->publicFlags);
 		omrthread_monitor_wait(vmThread->publicFlagsMutex);
 	}
 
@@ -62,7 +64,9 @@ MM_JNICriticalRegion::reacquireAccess(J9VMThread* vmThread, UDATA accessMask)
 	}
 
 	VM_VMAccess::setPublicFlags(vmThread, accessMask);
+	UDATA flags = vmThread->publicFlags;
 	omrthread_monitor_exit(vmThread->publicFlagsMutex);
+	Trc_MM_reacquireAccess_Exit(vmThread, flags);
 }
 
 /**
@@ -77,6 +81,7 @@ MM_JNICriticalRegion::reacquireAccess(J9VMThread* vmThread, UDATA accessMask)
 void
 MM_JNICriticalRegion::releaseAccess(J9VMThread* vmThread, UDATA* accessMask)
 {
+	Trc_MM_releaseAccess_Entry(vmThread);
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 	// Current thread must have entered the VM before acquiring exclusive
 	Assert_MM_false(vmThread->inNative);
@@ -85,7 +90,9 @@ MM_JNICriticalRegion::releaseAccess(J9VMThread* vmThread, UDATA* accessMask)
 		Assert_MM_true(J9_VM_FUNCTION(vmThread, currentVMThread)(vmThread->javaVM) == vmThread);
 	}
 
+	Trc_MM_releaseAccess_enterPFM(vmThread);
 	omrthread_monitor_enter(vmThread->publicFlagsMutex);
+	Trc_MM_releaseAccess_enteredPFM(vmThread, vmThread->publicFlags);
 	Assert_MM_true(0 != (vmThread->publicFlags & (J9_PUBLIC_FLAGS_VM_ACCESS | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS)));
 	UDATA currentAccess = vmThread->publicFlags & (J9_PUBLIC_FLAGS_VM_ACCESS | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS);
 	Assert_MM_true(0 != currentAccess);
@@ -105,7 +112,9 @@ MM_JNICriticalRegion::releaseAccess(J9VMThread* vmThread, UDATA* accessMask)
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		UDATA shouldRespond = FALSE;
 
+		Trc_MM_releaseAccess_enterEx(vmThread);
 		omrthread_monitor_enter(vm->exclusiveAccessMutex);
+		Trc_MM_releaseAccess_enteredEx(vmThread);
 
 		U_64 timeNow = VM_VMAccess::updateExclusiveVMAccessStats(vmThread, vm, PORTLIB);
 
@@ -119,11 +128,13 @@ MM_JNICriticalRegion::releaseAccess(J9VMThread* vmThread, UDATA* accessMask)
 		}
 		if(0 != (currentAccess & J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS)) {
 			--vm->jniCriticalResponseCount;
+			Trc_MM_releaseAccess_critical(vmThread, vm->jniCriticalResponseCount);
 			if(0 == vm->jniCriticalResponseCount) {
 				shouldRespond = TRUE;
 			}
 		}
 		if(shouldRespond) {
+			Trc_MM_releaseAccess_respond(vmThread);
 			VM_VMAccess::respondToExclusiveRequest(vmThread, vm, PORTLIB, timeNow, J9_EXCLUSIVE_SLOW_REASON_JNICRITICAL);
 		}
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);
@@ -131,4 +142,5 @@ MM_JNICriticalRegion::releaseAccess(J9VMThread* vmThread, UDATA* accessMask)
 
 	*accessMask = currentAccess;
 	omrthread_monitor_exit(vmThread->publicFlagsMutex);
+	Trc_MM_releaseAccess_Exit(vmThread, currentAccess);
 }

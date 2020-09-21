@@ -173,6 +173,7 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 					 */
 					reacquireJNICriticalAccess = TRUE;
 					VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS);
+					Trc_VM_acquireExclusive_critHand(vmThread, vmThread->publicFlags);
 				}
 				VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE);
 			}
@@ -187,6 +188,7 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 			if(reacquireJNICriticalAccess) {
 				/* Restore the manually cleared JNI critical access flag. */
 				VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS);
+				Trc_VM_acquireExclusive_reac(vmThread, vmThread->publicFlags);
 			}
 			omrthread_monitor_exit(vmThread->publicFlagsMutex);
 
@@ -194,6 +196,7 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 			omrthread_monitor_enter(vm->exclusiveAccessMutex);
 			Trc_VM_acquireExclusiveVMAccess_GrantingExclusiveAccess(vmThread);
 			initializeExclusiveVMAccessStats(vm, vmThread);
+			Trc_VM_acquireExclusive_state(vmThread, vm->exclusiveAccessState);
 			Assert_VM_true((J9_XACCESS_HANDING_OFF == vm->exclusiveAccessState) || (J9_XACCESS_HANDING_OFF_FROM_EXTERNAL_THREAD == vm->exclusiveAccessState));
 			if (J9_XACCESS_HANDING_OFF == vm->exclusiveAccessState ) {
 				Trc_VM_acquireExclusiveVMAccess_SettingResponsesExpected(vmThread);
@@ -229,6 +232,7 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 			while ((currentThread = currentThread->linkNext) != vmThread) {
 				omrthread_monitor_enter(currentThread->publicFlagsMutex);
 				VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE , true);
+				Trc_VM_acquireExclusive_notCount(vmThread, currentThread, currentThread->publicFlags);
 				/* Because the previous line writes atomically to the same field read below, there is likely
 				 * no barrier required here, but do a full fence to be sure.  The barrier may also be required
 				 * before reading inNative below.
@@ -240,6 +244,7 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 					 * or by exiting their outermost critical region.
 					 */
 					jniCriticalResponsesExpected++;
+					Trc_VM_acquireExclusive_crit(vmThread, currentThread, jniCriticalResponsesExpected);
 				}
 				omrthread_monitor_exit(currentThread->publicFlagsMutex);
 			}
@@ -280,6 +285,7 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 					VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
 #endif /* J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 					responsesExpected++;
+					Trc_VM_acquireExclusive_vmacc(vmThread, currentThread, currentThread->publicFlags, responsesExpected);
 				}
 #else /* J9VM_INTERP_ATOMIC_FREE_JNI */
 				if (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) {
@@ -356,6 +362,7 @@ void   internalAcquireVMAccessNoMutexWithMask(J9VMThread * vmThread, UDATA haltM
 		/* In a critical region and about to block acquiring VM access. */
 		reacquireJNICriticalAccess = TRUE;
 		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS);
+		Trc_VM_acquire_crit(vmThread, vmThread->publicFlags);
 
 		if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)) {
 			omrthread_monitor_enter(vm->exclusiveAccessMutex);
@@ -363,6 +370,7 @@ void   internalAcquireVMAccessNoMutexWithMask(J9VMThread * vmThread, UDATA haltM
 			U_64 timeNow = updateExclusiveVMAccessStats(vmThread);
 
 			--vm->jniCriticalResponseCount;
+			Trc_VM_acquire_crit_ex(vmThread, vm->jniCriticalResponseCount);
 			if(vm->jniCriticalResponseCount == 0) {
 				U_64 timeTaken = j9time_hires_delta(vm->omrVM->exclusiveVMAccessStats.startTime, timeNow, J9PORT_TIME_DELTA_IN_MILLISECONDS);
 
@@ -393,8 +401,10 @@ void   internalAcquireVMAccessNoMutexWithMask(J9VMThread * vmThread, UDATA haltM
 
 	if(reacquireJNICriticalAccess) {
 		VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_VMACCESS_ACQUIRE_BITS | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS);
+		Trc_VM_acquire_reac(vmThread, vmThread->publicFlags);
 	} else {
 		VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_VMACCESS_ACQUIRE_BITS);
+		Trc_VM_acquire_noreac(vmThread, vmThread->publicFlags);
 	}
 	Assert_VM_mustHaveVMAccess(vmThread);
 }
@@ -518,6 +528,7 @@ void releaseExclusiveVMAccess(J9VMThread * vmThread)
 			Assert_VM_false(J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE));
 			/* Set the halt flag on the current thread */
 			VM_VMAccess::setPublicFlags(vmThread,J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE, true);
+			Trc_VM_releaseExclusive_handoff(vmThread, vmThread->publicFlags);
 			/* The thread accepting the hand off will be expecting
 			 * responses for both VM and JNI critical access.
 			 */
@@ -526,12 +537,14 @@ void releaseExclusiveVMAccess(J9VMThread * vmThread)
 				 * until it gives it up before the hand off can complete.
 				 */
 				vm->jniCriticalResponseCount = 0;
+				Trc_VM_releaseExclusive_crit0(vmThread);
 			} else {
 				/* This thread does not hold critical access. Preemptively
 				 * decrement the response count so the accepting thread
 				 * will not wait.
 				 */
 				vm->jniCriticalResponseCount = -1;
+				Trc_VM_releaseExclusive_critneg(vmThread);
 			}
 			omrthread_monitor_exit(vmThread->publicFlagsMutex);
 
@@ -550,6 +563,7 @@ void releaseExclusiveVMAccess(J9VMThread * vmThread)
 			 */
 			nextThread->exclusiveVMAccessQueueNext = NULL;
 			VM_VMAccess::clearPublicFlags(nextThread,J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
+			Trc_VM_releaseExclusive_handoff_next(vmThread, nextThread, nextThread->publicFlags);
 			omrthread_monitor_exit(vm->exclusiveAccessMutex);
 
 			omrthread_monitor_enter(nextThread->publicFlagsMutex);
@@ -598,10 +612,12 @@ void releaseExclusiveVMAccess(J9VMThread * vmThread)
 			PORT_ACCESS_FROM_JAVAVM(vm);
 			j9mem_free_memory(currentThread->lastDecompilation);
 			currentThread->lastDecompilation = NULL;
+			Trc_VM_releaseExclusive_done(vmThread, currentThread, currentThread->publicFlags);
 			while ((currentThread = currentThread->linkNext) != vmThread) {
 				j9mem_free_memory(currentThread->lastDecompilation);
 				currentThread->lastDecompilation = NULL;
 				VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
+				Trc_VM_releaseExclusive_done(vmThread, currentThread, currentThread->publicFlags);
 			}
 			omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
 			omrthread_monitor_exit(vm->exclusiveAccessMutex);
@@ -733,6 +749,8 @@ acquireExclusiveVMAccessFromExternalThread(J9JavaVM * vm)
 	UDATA vmResponsesExpected = 0;
 	UDATA jniResponsesExpected = 0;
 
+	Trc_VM_acquireExclusiveVMAccessFromExternalThread_Entry();
+
 	synchronizeRequestsFromExternalThread(vm, TRUE);
 
 	/* Post the halt request to all threads */
@@ -807,6 +825,7 @@ acquireExclusiveVMAccessFromExternalThread(J9JavaVM * vm)
 	/* Wait for all threads to respond to the halt request */
 
 	waitForResponseFromExternalThread(vm, vmResponsesExpected, jniResponsesExpected);
+	Trc_VM_acquireExclusiveVMAccessFromExternalThread_Exit();
 
 }
 
@@ -1077,6 +1096,7 @@ acquireSafePointVMAccess(J9VMThread * vmThread)
 	UDATA responsesExpected = 0;
 	J9VMThread * currentThread;
 
+	Trc_VM_acquireSafePointVMAccess_Entry(vmThread);
 	if (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_DEBUG_VM_ACCESS) {
 		Assert_VM_true(currentVMThread(vm) == vmThread);
 	}
@@ -1191,6 +1211,7 @@ retry:
 	Assert_VM_mustHaveVMAccess(vmThread);
 	Assert_VM_true(J9_XACCESS_EXCLUSIVE == vm->safePointState);
 	omrthread_monitor_enter(vm->vmThreadListMutex);
+	Trc_VM_acquireSafePointVMAccess_Exit(vmThread);
 }
 
 void

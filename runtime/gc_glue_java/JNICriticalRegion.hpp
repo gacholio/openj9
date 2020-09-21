@@ -61,6 +61,7 @@ public:
 	static MMINLINE void
 	enterCriticalRegion(J9VMThread* vmThread, bool hasVMAccess)
 	{
+		Trc_MM_enterCriticalRegion_Entry(vmThread, (UDATA)hasVMAccess, vmThread->publicFlags);
 		if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_DEBUG_VM_ACCESS)) {
 			Assert_MM_true(J9_VM_FUNCTION(vmThread, currentVMThread)(vmThread->javaVM) == vmThread);
 		}
@@ -69,6 +70,7 @@ public:
 		if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION)) {
 			/* Nested critical region; increment the count */
 			vmThread->jniCriticalDirectCount += 1;
+			Trc_MM_enterCriticalRegion_recursive(vmThread, vmThread->jniCriticalDirectCount);
 	  	} else {
 			UDATA const criticalFlags = J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS;
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
@@ -80,41 +82,52 @@ public:
 			if (expectedFlags == VM_AtomicSupport::lockCompareExchange(&vmThread->publicFlags, expectedFlags, expectedFlags | criticalFlags)) {
 				/* First entry into a critical region */
 				vmThread->jniCriticalDirectCount = 1;
+				Trc_MM_enterCriticalRegion_CAS_success(vmThread);
 			} else {
 				omrthread_t const osThread = vmThread->osThread;
 				omrthread_monitor_t const publicFlagsMutex = vmThread->publicFlagsMutex;
+				Trc_MM_enterCriticalRegion_enterPFM(vmThread);
 				omrthread_monitor_enter_using_threadId(publicFlagsMutex, osThread);
 				if (hasVMAccess) {
 					/* Entering the first critical region with VM access; set the critical flags */
 					VM_VMAccess::setPublicFlags(vmThread, criticalFlags);
 					vmThread->jniCriticalDirectCount = 1;
-
+					Trc_MM_enterCriticalRegion_vmAccess(vmThread);
 					/* The current thread has VM access and just acquired JNI critical access.
 					 * If an exclusive request is in progress and the current thread has already
 					 * been requested to halt, then adjust the JNI response count accordingly.
 					 */
 					if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)) {
 						J9JavaVM* const vm = vmThread->javaVM;
+						Trc_MM_enterCriticalRegion_enterEx(vmThread);
 						omrthread_monitor_t const exclusiveAccessMutex = vm->exclusiveAccessMutex;
 						omrthread_monitor_enter_using_threadId(exclusiveAccessMutex, osThread);
 						vm->jniCriticalResponseCount += 1;
+						Trc_MM_enterCriticalRegion_bumpCount(vmThread, vm->jniCriticalResponseCount);
 						omrthread_monitor_exit_using_threadId(exclusiveAccessMutex, osThread);
 					}
 				} else {
+					Trc_MM_enterCriticalRegion_novmAccess(vmThread);
 					/* Entering the first critical region; acquire VM access and set the critical flags */
 					if (0 == VM_AtomicSupport::lockCompareExchange(&vmThread->publicFlags, 0, criticalFlags)) {
 						/* Set the count to 1 */
 						vmThread->jniCriticalDirectCount = 1;
+						Trc_MM_enterCriticalRegion_CAS_success2(vmThread);
 					} else {
+						Trc_MM_enterCriticalRegion_enterVM(vmThread);
 						J9_VM_FUNCTION(vmThread, internalEnterVMFromJNI)(vmThread);
+						Trc_MM_enterCriticalRegion_enteredVM(vmThread);
 						VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS);
 						vmThread->jniCriticalDirectCount = 1;
+						Trc_MM_enterCriticalRegion_exitVM(vmThread);
 						J9_VM_FUNCTION(vmThread, internalExitVMToJNI)(vmThread);
+						Trc_MM_enterCriticalRegion_exittedVM(vmThread);
 					}
 				}
 				omrthread_monitor_exit_using_threadId(publicFlagsMutex, osThread);
 			}
 	 	}
+	 	Trc_MM_enterCriticalRegion_Exit(vmThread, vmThread->publicFlags);
 	}
 
 	/**
@@ -128,6 +141,7 @@ public:
 	static MMINLINE void
 	exitCriticalRegion(J9VMThread* vmThread, bool hasVMAccess)
 	{
+		Trc_MM_exitCriticalRegion_Entry(vmThread, (UDATA)hasVMAccess, vmThread->publicFlags, vmThread->jniCriticalDirectCount);
 		if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_DEBUG_VM_ACCESS)) {
 			Assert_MM_true(J9_VM_FUNCTION(vmThread, currentVMThread)(vmThread->javaVM) == vmThread);
 		}
@@ -142,22 +156,28 @@ public:
 			UDATA const finalFlags = hasVMAccess ? J9_PUBLIC_FLAGS_VM_ACCESS : 0;
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			UDATA const jniAccess = criticalFlags | finalFlags;
+			Trc_MM_exitCriticalRegion_attemptCAS(vmThread, jniAccess, finalFlags);
 			if (jniAccess != VM_AtomicSupport::lockCompareExchange(&vmThread->publicFlags, jniAccess, finalFlags)) {
 				/* Exiting the last critical region; clear the critical flags.
 				 * Cache a copy of the flags first to determine if we must respond to an exclusive access request.
 				 */
 				omrthread_t const osThread = vmThread->osThread;
 				omrthread_monitor_t const publicFlagsMutex = vmThread->publicFlagsMutex;
+				Trc_MM_exitCriticalRegion_CASfail(vmThread);
 				omrthread_monitor_enter_using_threadId(publicFlagsMutex, osThread);
 				UDATA const publicFlags = VM_VMAccess::clearPublicFlagsNoMutex(vmThread, criticalFlags);
+				Trc_MM_exitCriticalRegion_cleared(vmThread, publicFlags);
 				if (J9_ARE_ALL_BITS_SET(publicFlags, J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS | J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)) {
 					/* If an exclusive request is pending, then respond. */
 					J9JavaVM* const vm = vmThread->javaVM;
 					omrthread_monitor_t const exclusiveAccessMutex = vm->exclusiveAccessMutex;
+					Trc_MM_exitCriticalRegion_exclusive(vmThread);
 					omrthread_monitor_enter_using_threadId(exclusiveAccessMutex, osThread);
 					PORT_ACCESS_FROM_JAVAVM(vm);
 					U_64 const timeNow = VM_VMAccess::updateExclusiveVMAccessStats(vmThread, vm, PORTLIB);
+					Trc_MM_exitCriticalRegion_check(vmThread, vm->jniCriticalResponseCount);
 					if (--vm->jniCriticalResponseCount == 0) {
+						Trc_MM_exitCriticalRegion_respond(vmThread);
 						VM_VMAccess::respondToExclusiveRequest(vmThread, vm, PORTLIB, timeNow, J9_EXCLUSIVE_SLOW_REASON_JNICRITICAL);
 					}
 					omrthread_monitor_exit_using_threadId(exclusiveAccessMutex, osThread);
@@ -165,6 +185,7 @@ public:
 				omrthread_monitor_exit_using_threadId(publicFlagsMutex, osThread);
 			}
 		}
+		Trc_MM_exitCriticalRegion_Exit(vmThread, vmThread->publicFlags);
 	}
 };
 
