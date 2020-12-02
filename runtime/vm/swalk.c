@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1465,7 +1465,7 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	swPrintf(walkState, 4, "\tUsing local mapper\n");
 #endif
-	errorCode = vm->localMapFunction(PORTLIB, romClass, romMethod, offsetPC, result, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
+	errorCode = vm->localMapFunction(PORTLIB, romClass, romMethod, offsetPC, result, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer, &walkState->currentThread->mapBufferSize, &walkState->currentThread->mapBuffer);
 
 	if (errorCode < 0) {
 		/* Local map failed, result = %p - aborting VM - needs new message TBD */
@@ -1487,7 +1487,7 @@ getStackMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * r
 	PORT_ACCESS_FROM_WALKSTATE(walkState);
 	IDATA errorCode;
 
-	errorCode = j9stackmap_StackBitsForPC(PORTLIB, offsetPC, romClass, romMethod, result, pushCount, walkState->walkThread->javaVM, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
+	errorCode = j9stackmap_StackBitsForPC(PORTLIB, offsetPC, romClass, romMethod, result, pushCount, walkState->walkThread->javaVM, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer, &walkState->currentThread->mapBufferSize, &walkState->currentThread->mapBuffer);
 	if (errorCode < 0) {
 		/* Local map failed, result = %p - aborting VM */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_STACK_MAP_FAILED, errorCode);

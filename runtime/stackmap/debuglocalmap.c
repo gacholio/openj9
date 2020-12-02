@@ -507,7 +507,9 @@ IDATA
 j9localmap_DebugLocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase,
 								void * userData, 
 								UDATA * (* getBuffer) (void * userData), 
-								void (* releaseBuffer) (void * userData)) 
+								void (* releaseBuffer) (void * userData),
+								UDATA *mapBufferSize,
+								void **mapBuffer)
 {
 
 	PORT_ACCESS_FROM_PORT(portLib);
@@ -539,19 +541,32 @@ j9localmap_DebugLocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J
 	if(scratchSize < LOCAL_SCRATCH) {
 		scratch = localScratch;
 	} else {
-		allocScratch = j9mem_allocate_memory(scratchSize, OMRMEM_CATEGORY_VM);
-		if (allocScratch) {
-			scratch = allocScratch;
-		} else if (getBuffer != NULL) {
-			globalScratch = (getBuffer) (userData);
-			scratch = globalScratch;
-			if (!scratch) {
-				Trc_Map_j9localmap_DebugLocalBitsForPC_GlobalBufferFailure(scratchSize);
+		if ((NULL != mapBuffer) && (scratchSize <= *mapBufferSize)) {
+			scratch = *mapBuffer;
+		} else {
+			void *oldBuffer = NULL;
+			if (NULL != mapBuffer) {
+				oldBuffer = *mapBuffer;
+			}
+			allocScratch = j9mem_reallocate_memory(oldBuffer, scratchSize, OMRMEM_CATEGORY_VM);
+			if (allocScratch) {
+				scratch = allocScratch;
+				if (NULL != mapBuffer) {
+					*mapBufferSize = scratchSize;
+					*mapBuffer = allocScratch;
+					allocScratch = NULL;
+				}
+			} else if (getBuffer != NULL) {
+				globalScratch = (getBuffer) (userData);
+				scratch = globalScratch;
+				if (!scratch) {
+					Trc_Map_j9localmap_DebugLocalBitsForPC_GlobalBufferFailure(scratchSize);
+					return BCT_ERR_OUT_OF_MEMORY;
+				}
+			} else {
+				Trc_Map_j9localmap_DebugLocalBitsForPC_AllocationFailure(scratchSize);
 				return BCT_ERR_OUT_OF_MEMORY;
 			}
-		} else {
-			Trc_Map_j9localmap_DebugLocalBitsForPC_AllocationFailure(scratchSize);
-			return BCT_ERR_OUT_OF_MEMORY;
 		}
 	}
 
@@ -651,7 +666,7 @@ validateLocalSlot(J9VMThread *currentThread, J9Method *ramMethod, U_32 offsetPC,
 			}
 		}
 
-		mapRC = j9localmap_DebugLocalBitsForPC(PORTLIB, romClass, romMethod, offsetPC, localMap, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
+		mapRC = j9localmap_DebugLocalBitsForPC(PORTLIB, romClass, romMethod, offsetPC, localMap, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer, &currentThread->mapBufferSize, &currentThread->mapBuffer);
 		if (mapRC < 0) {
 			switch (mapRC) {
 				case BCT_ERR_OUT_OF_MEMORY:

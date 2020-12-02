@@ -74,7 +74,9 @@ j9stackmap_StackBitsForPC(J9PortLibrary * portLib, UDATA pc, J9ROMClass * romCla
 								U_32 * resultArrayBase, UDATA resultArraySize,
 								void * userData, 
 								UDATA * (* getBuffer) (void * userData), 
-								void (* releaseBuffer) (void * userData))
+								void (* releaseBuffer) (void * userData),
+								UDATA *mapBufferSize,
+								void **mapBuffer)
 {
 
 	PORT_ACCESS_FROM_PORT(portLib);
@@ -108,20 +110,32 @@ j9stackmap_StackBitsForPC(J9PortLibrary * portLib, UDATA pc, J9ROMClass * romCla
 		scratch = localScratch;
 
 	} else {
-		allocScratch = j9mem_allocate_memory(scratchSize, OMRMEM_CATEGORY_VM);
-
-		if (allocScratch) {
-			scratch = allocScratch;
-		} else if (getBuffer != NULL) {
-			globalScratch = (getBuffer) (userData);
-			scratch = globalScratch;
-			if (!scratch) {
-				Trc_Map_j9stackmap_StackBitsForPC_GlobalBufferFailure(scratchSize);
+		if ((NULL != mapBuffer) && (scratchSize <= *mapBufferSize)) {
+			scratch = *mapBuffer;
+		} else {
+			void *oldBuffer = NULL;
+			if (NULL != mapBuffer) {
+				oldBuffer = *mapBuffer;
+			}
+			allocScratch = j9mem_reallocate_memory(oldBuffer, scratchSize, OMRMEM_CATEGORY_VM);
+			if (allocScratch) {
+				scratch = allocScratch;
+				if (NULL != mapBuffer) {
+					*mapBufferSize = scratchSize;
+					*mapBuffer = allocScratch;
+					allocScratch = NULL;
+				}
+			} else if (getBuffer != NULL) {
+				globalScratch = (getBuffer) (userData);
+				scratch = globalScratch;
+				if (!scratch) {
+					Trc_Map_j9stackmap_StackBitsForPC_GlobalBufferFailure(scratchSize);
+					return BCT_ERR_OUT_OF_MEMORY;
+				}
+			} else {
+				Trc_Map_j9stackmap_StackBitsForPC_AllocationFailure(scratchSize);
 				return BCT_ERR_OUT_OF_MEMORY;
 			}
-		} else {
-			Trc_Map_j9stackmap_StackBitsForPC_AllocationFailure(scratchSize);
-			return BCT_ERR_OUT_OF_MEMORY;
 		}
 	}
 

@@ -1448,7 +1448,7 @@ int32_t *TR_J9VMBase::getCurrentLocalsMapForDLT(TR::Compilation *comp)
 
    numBundles = (numBundles+31)/32;
    currentBundles = (int32_t *)comp->trMemory()->allocateHeapMemory(numBundles * sizeof(int32_t));
-   jitConfig->javaVM->localMapFunction(_portLibrary, J9_CLASS_FROM_METHOD(j9method)->romClass, getOriginalROMMethod(j9method), comp->getDltBcIndex(), (U_32 *)currentBundles, NULL, NULL, NULL);
+   jitConfig->javaVM->localMapFunction(_portLibrary, J9_CLASS_FROM_METHOD(j9method)->romClass, getOriginalROMMethod(j9method), comp->getDltBcIndex(), (U_32 *)currentBundles, NULL, NULL, NULL, NULL, NULL);
 #endif
 
    return currentBundles;

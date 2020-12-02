@@ -4486,7 +4486,7 @@ typedef struct J9InternalVMFunctions {
 	IDATA  ( *internalAttachCurrentThread)(struct J9JavaVM * vm, struct J9VMThread ** p_env, struct J9JavaVMAttachArgs * thr_args, UDATA threadType, void * osThread) ;
 	void  ( *setHaltFlag)(struct J9VMThread * vmThread, UDATA flag) ;
 	void  ( *returnFromJNI)(struct J9VMThread *env, void * bp) ;
-	IDATA  ( *j9stackmap_StackBitsForPC)(J9PortLibrary * portLib, UDATA pc, struct J9ROMClass * romClass, struct J9ROMMethod * romMethod, U_32 * resultArrayBase, UDATA resultArraySize, void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData)) ;
+	IDATA  ( *j9stackmap_StackBitsForPC)(J9PortLibrary * portLib, UDATA pc, struct J9ROMClass * romClass, struct J9ROMMethod * romMethod, U_32 * resultArrayBase, UDATA resultArraySize, void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData), UDATA *mapBufferSize, void **mapBuffer) ;
 	struct J9HookInterface**  ( *getJITHookInterface)(struct J9JavaVM* vm) ;
 	void  ( *haltThreadForInspection)(struct J9VMThread * currentThread, struct J9VMThread * vmThread) ;
 	void  ( *resumeThreadForInspection)(struct J9VMThread * currentThread, struct J9VMThread * vmThread) ;
@@ -4553,7 +4553,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *resolveVirtualMethodRefInto)(struct J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpIndex, UDATA resolveFlags, struct J9Method **resolvedMethod, struct J9RAMVirtualMethodRef *ramCPEntry) ;
 	IDATA  ( *findObjectDeadlockedThreads)(struct J9VMThread *currentThread, j9object_t **pDeadlockedThreads, j9object_t **pBlockingObjects, UDATA flags) ;
 	struct J9ROMClass*  ( *findROMClassFromPC)(struct J9VMThread *vmThread, UDATA methodPC, struct J9ClassLoader **resultClassLoader) ;
-	IDATA  ( *j9localmap_LocalBitsForPC)(struct J9PortLibrary * portLib, struct J9ROMClass * romClass, struct J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData)) ;
+	IDATA  ( *j9localmap_LocalBitsForPC)(struct J9PortLibrary * portLib, struct J9ROMClass * romClass, struct J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData), UDATA *mapBufferSize, void **mapBuffer) ;
 	int  ( *fillInDgRasInterface)(struct DgRasInterface *dri) ;
 	void  ( *rasStartDeferredThreads)(struct J9JavaVM* vm) ;
 	int  ( *initJVMRI)(struct J9JavaVM* vm) ;
@@ -4890,6 +4890,8 @@ typedef struct J9VMThread {
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	UDATA safePointCount;
+	UDATA mapBufferSize;
+	void *mapBuffer;
 } J9VMThread;
 
 #define J9VMTHREAD_ALIGNMENT  0x100
@@ -5258,7 +5260,7 @@ typedef struct J9JavaVM {
 	struct J9HashTable* fieldIndexTable;
 	UDATA fieldIndexThreshold;
 	omrthread_monitor_t fieldIndexMutex;
-	IDATA  ( *localMapFunction)(struct J9PortLibrary * portLib, struct J9ROMClass * romClass, struct J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData)) ;
+	IDATA  ( *localMapFunction)(struct J9PortLibrary * portLib, struct J9ROMClass * romClass, struct J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData), UDATA *mapBufferSize, void **mapBuffer) ;
 	UDATA realtimeHeapMapBasePageRounded;
 	UDATA* realtimeHeapMapBits;
 	struct J9VMGCSizeClasses *realtimeSizeClasses;

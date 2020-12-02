@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,11 +125,13 @@ j9localmap_ArgBitsForPC0 (J9ROMClass * romClass, J9ROMMethod * romMethod, U_32 *
 * @param userData
 * @param getBuffer function
 * @param releaseBuffer function
+* @param mapBufferSize
+* @param mapBuffer
 * @return IDATA
 */
 IDATA
 j9localmap_LocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, 
-		void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData));
+		void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData), UDATA *mapBuffer, void **mapBufferSize);
 
 
 /* ---------------- debuglocalmap.c ---------------- */
@@ -144,11 +146,13 @@ j9localmap_LocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMM
 * @param userData
 * @param getBuffer function
 * @param releaseBuffer function
+* @param mapBufferSize
+* @param mapBuffer
 * @return IDATA
 */
 IDATA
 j9localmap_DebugLocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, 
-		void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData)); 
+		void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData), UDATA *mapBuffer, void **mapBufferSize); 
 
 
 /**
@@ -187,6 +191,8 @@ installDebugLocalMapper(J9JavaVM * vm);
 * @param userData
 * @param getBuffer function
 * @param releaseBuffer function
+* @param mapBufferSize
+* @param mapBuffer
 * @return IDATA
 */
 IDATA
@@ -194,7 +200,9 @@ j9stackmap_StackBitsForPC(J9PortLibrary * portLib, UDATA pc, J9ROMClass * romCla
 		U_32 * resultArrayBase, UDATA resultArraySize,
 		void * userData, 
 		UDATA * (* getBuffer) (void * userData), 
-		void (* releaseBuffer) (void * userData));
+		void (* releaseBuffer) (void * userData),
+		UDATA *mapBufferSize,
+		void **mapBuffer);
 
 #ifdef __cplusplus
 }

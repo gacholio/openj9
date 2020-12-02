@@ -124,22 +124,22 @@ IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 				switch (j) {
 				case LOCAL_MAP:
 					result = j9localmap_LocalBitsForPC(portLib, romClass, romMethod, pc, resultArray,
-					                NULL, NULL, NULL);
+					                NULL, NULL, NULL, NULL, NULL);
 					mapChar = 'l';
 					outputCount = localsCount;
 					break;
 				case DEBUG_MAP:
 					result = j9localmap_DebugLocalBitsForPC(portLib, romClass, romMethod, pc, resultArray,
-					                NULL, NULL, NULL);
+					                NULL, NULL, NULL, NULL, NULL);
 					mapChar = 'd';
 					outputCount = localsCount;
 					break;
 				case STACK_MAP:
 					/* First call is to get the stack depth */
 					result = j9stackmap_StackBitsForPC(portLib, pc, romClass, romMethod, NULL, 0,
-					                NULL, NULL, NULL);
+					                NULL, NULL, NULL, NULL, NULL);
 					result = j9stackmap_StackBitsForPC(portLib, pc, romClass, romMethod, resultArray, result,
-					                NULL, NULL, NULL);
+					                NULL, NULL, NULL, NULL, NULL);
 					mapChar = 's';
 					outputCount = result;
 					break;

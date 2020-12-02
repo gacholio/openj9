@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -253,6 +253,7 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 	}
 
 	j9mem_free_memory(vmThread->lastDecompilation);
+	j9mem_free_memory(vmThread->mapBuffer);
 
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
 	if (vmThread->dltBlock.temps != vmThread->dltBlock.inlineTempsBuffer) {

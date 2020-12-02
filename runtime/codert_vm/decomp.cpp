@@ -540,7 +540,7 @@ getPendingStackHeight(J9VMThread *currentThread, U_8 *interpreterPC, J9Method *r
 		J9PortLibrary *portLibrary = vm->portLibrary;
 		U_8 bytecode = *interpreterPC;
 		/* Use the stack mapper to determine the pending stack height */
-		pendingStackHeight = (UDATA)vmFuncs->j9stackmap_StackBitsForPC(portLibrary,	offsetPC, romClass, originalROMMethod, NULL, 0, NULL, NULL, NULL);
+		pendingStackHeight = (UDATA)vmFuncs->j9stackmap_StackBitsForPC(portLibrary,	offsetPC, romClass, originalROMMethod, NULL, 0, NULL, NULL, NULL, NULL, NULL);
 		/* All invokes consider their arguments not to be pending - remove the arguments from the pending stack */
 		switch(bytecode) {
 		case JBinvokevirtual:

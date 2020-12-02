@@ -988,7 +988,7 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 									/* Reuse map in this merge if needed for multiple merges at same map */
 									if (mergePC == ((UDATA) -1)) {
 										mergePC = target;
-										if (j9localmap_LocalBitsForPC(verifyData->portLib, romClass, romMethod, mergePC, &resultArrayBase, NULL, NULL, NULL) != 0) {
+										if (j9localmap_LocalBitsForPC(verifyData->portLib, romClass, romMethod, mergePC, &resultArrayBase, NULL, NULL, NULL, NULL, NULL) != 0) {
 											/* local map error - force a full merge */
 											resultArrayBase = (U_32) -1;
 										} 
