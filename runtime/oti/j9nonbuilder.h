@@ -4892,6 +4892,8 @@ typedef struct J9VMThread {
 	UDATA safePointCount;
 	UDATA mapBufferSize;
 	void *mapBuffer;
+	UDATA resultBufferSize;
+	void *resultBuffer;
 } J9VMThread;
 
 #define J9VMTHREAD_ALIGNMENT  0x100

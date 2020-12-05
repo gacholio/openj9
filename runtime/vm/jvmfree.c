@@ -254,6 +254,7 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 
 	j9mem_free_memory(vmThread->lastDecompilation);
 	j9mem_free_memory(vmThread->mapBuffer);
+	j9mem_free_memory(vmThread->resultBuffer);
 
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
 	if (vmThread->dltBlock.temps != vmThread->dltBlock.inlineTempsBuffer) {

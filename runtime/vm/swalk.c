@@ -854,10 +854,19 @@ walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offs
 
 	if ((numberOfMappedLocals > 32) || (pendingStackHeight > 32)) {
 		UDATA maxCount = (numberOfMappedLocals > pendingStackHeight) ? numberOfMappedLocals : pendingStackHeight;
-		result = j9mem_allocate_memory(((maxCount + 31) >> 5) * sizeof(U_32), OMRMEM_CATEGORY_VM);
-		if (NULL == result) {
-			globalBuffer = j9mapmemory_GetResultsBuffer(vm);
-			result = globalBuffer;
+		UDATA resultSize = ((maxCount + 31) >> 5) * sizeof(U_32);
+		void *oldBuffer = walkState->currentThread->resultBuffer;
+		if ((NULL != oldBuffer) && (resultSize <= walkState->currentThread->resultBufferSize)) {
+			result = oldBuffer;
+		} else {
+			result = j9mem_reallocate_memory(oldBuffer, resultSize, OMRMEM_CATEGORY_VM);
+			if (NULL == result) {
+				globalBuffer = j9mapmemory_GetResultsBuffer(vm);
+				result = globalBuffer;
+			} else {
+				walkState->currentThread->resultBuffer = result;
+				walkState->currentThread->resultBufferSize = resultSize;
+			}
 		}
 	}
 
@@ -882,9 +891,7 @@ walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offs
 	}
 
 	if (result != &smallResult) {
-		if (NULL == globalBuffer) {
-			j9mem_free_memory(result);
-		} else {
+		if (NULL != globalBuffer) {
 			j9mapmemory_ReleaseResultsBuffer(vm);
 		}
 	}
