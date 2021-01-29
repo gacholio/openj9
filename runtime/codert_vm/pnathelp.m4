@@ -21,6 +21,7 @@ dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exc
 include(phelpers.m4)
 
 	.file "pnathelp.s"
+	.machine power7
 
 define({CSECT_NAME},{pnathelp})
 
