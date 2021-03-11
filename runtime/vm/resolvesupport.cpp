@@ -318,14 +318,10 @@ tryAgain:
 	}
 
 	if (ramClassRefWrapper->modifiers == (UDATA)-1) {
-		if ((findClassFlags & J9_FINDCLASS_FLAG_THROW_ON_FAIL) == J9_FINDCLASS_FLAG_THROW_ON_FAIL) {
+		if (throwException) {
 			detailString = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmStruct, classNameData, classNameLength, 0);
-			if (throwException) {
-				if (NULL == vmStruct->currentException) {
-					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)detailString);
-				}
-			} else {
-				VM_VMHelpers::clearException(vmStruct);
+			if (NULL == vmStruct->currentException) {
+				setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)detailString);
 			}
 		}
 		goto done;
@@ -408,7 +404,7 @@ tryAgain:
 		IDATA checkResult = checkVisibility(vmStruct, J9_CLASS_FROM_CP(ramCP), accessClass, accessModifiers, lookupOptions);
 		if (checkResult < J9_VISIBILITY_ALLOWED) {
 			/* Check for pending exception for (ie. Nesthost class loading/verify), do not overwrite these exceptions */
-			if (canRunJavaCode && (!VM_VMHelpers::exceptionPending(vmStruct))) {
+			if (throwException && !VM_VMHelpers::exceptionPending(vmStruct)) {
 				char *errorMsg = NULL;
 				PORT_ACCESS_FROM_VMC(vmStruct);
 				if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
@@ -426,7 +422,7 @@ tryAgain:
 	accessModifiers = resolvedClass->romClass->modifiers;
 	if (J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_INSTANTIABLE)) {
 		if (!J9ROMCLASS_ALLOCATES_VIA_NEW(resolvedClass->romClass)) {
-			if (canRunJavaCode) {
+			if (throwException) {
 				setCurrentException(vmStruct, J9_EX_CTOR_CLASS + J9VMCONSTANTPOOL_JAVALANGINSTANTIATIONERROR,
 						(UDATA *)resolvedClass->classObject);
 			}
@@ -777,7 +773,7 @@ tryAgain:
 					badMemberModifier = J9AccPrivate;
 illegalAccess:
 					staticAddress = NULL;
-					if (canRunJavaCode && !threadEventsPending(vmStruct)) {
+					if (throwException && !threadEventsPending(vmStruct)) {
 						char *errorMsg = NULL;
 						PORT_ACCESS_FROM_VMC(vmStruct);
 						if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
