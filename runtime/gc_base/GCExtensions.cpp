@@ -95,6 +95,7 @@ MM_GCExtensions::initialize(MM_EnvironmentBase *env)
 
 #if defined(J9VM_GC_JNI_ARRAY_CACHE)
 	getJavaVM()->jniArrayCacheMaxSize = J9_GC_JNI_ARRAY_CACHE_SIZE;
+	getJavaVM()->jniArrayCacheMaxCount = J9_GC_JNI_ARRAY_CACHE_COUNT;
 #endif /* J9VM_GC_JNI_ARRAY_CACHE */
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)

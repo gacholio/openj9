@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2021 IBM Corp. and others
  *
@@ -1247,9 +1246,20 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 #if defined(J9VM_GC_JNI_ARRAY_CACHE)
 		if (try_scan(&scan_start, "jniArrayCacheMax=")) {
 			if(try_scan(&scan_start, "unlimited")) {
-				vm->jniArrayCacheMaxSize=((UDATA)-1);
+				vm->jniArrayCacheMaxSize = UDATA_MAX;
 			} else {
 				if(!scan_udata_helper(vm, &scan_start, &vm->jniArrayCacheMaxSize, "jniArrayCacheMax=")) {
+					returnValue = JNI_EINVAL;
+					break;
+				}
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "jniArrayCacheCount=")) {
+			if(try_scan(&scan_start, "unlimited")) {
+				vm->jniArrayCacheMaxCount = UDATA_MAX;
+			} else {
+				if(!scan_udata_helper(vm, &scan_start, &vm->jniArrayCacheMaxCount, "jniArrayCachCount=")) {
 					returnValue = JNI_EINVAL;
 					break;
 				}

@@ -633,7 +633,12 @@ typedef struct J9ClassHotFieldsInfo {
 	uint8_t hotFieldOffset3;
 	uint8_t consecutiveHotFieldSelections; 
 	uint8_t hotFieldListLength;  
- } J9ClassHotFieldsInfo;
+} J9ClassHotFieldsInfo;
+
+typedef struct J9JNICache {
+	UDATA size;
+	struct J9JNICache *next;
+} J9JNICache;
 
 typedef struct J9ROMNameAndSignature {
 	J9SRP name;
@@ -3294,6 +3299,7 @@ typedef struct J9ArrayClass {
 /* Hide the asserts from DDR */
 #if !defined(TYPESTUBS_H)
 static_assert(sizeof(J9Class) == sizeof(J9ArrayClass), "J9Class and J9ArrayClass must be the same size");
+static_assert(0 == (sizeof(J9JNICache) % 8), "J9JNICache must be a multiple of 8 bytes");
 #endif /* !TYPESTUBS_H */
 #endif /* __cplusplus */
 #endif /* LINUX && J9VM_ARCH_X86 */
@@ -4908,8 +4914,8 @@ typedef struct J9VMThread {
 	UDATA dropFlags;
 	struct J9Pool* monitorEnterRecordPool;
 	struct J9MonitorEnterRecord* monitorEnterRecords;
-	UDATA* jniArrayCache;
-	UDATA* jniArrayCache2;
+	J9JNICache *jniArrayCache;
+	UDATA jniArrayCacheCount;
 	struct J9StackWalkState inlineStackWalkState;
 	struct J9JITDecompilationInfo* decompilationStack;
 	struct J9ModronThreadLocalHeap allocateThreadLocalHeap;
@@ -5258,6 +5264,7 @@ typedef struct J9JavaVM {
 	UDATA  ( *jitWalkStackFrames)(struct J9StackWalkState *walkState) ;
 	UDATA  ( *jitGetOwnedObjectMonitors)(struct J9StackWalkState *walkState) ;
 	UDATA jniArrayCacheMaxSize;
+	UDATA jniArrayCacheMaxCount;
 #if defined(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE) || defined(J9VM_ENV_CALL_VIA_TABLE)
 	UDATA jclTOC;
 	UDATA hookTOC;
