@@ -2922,14 +2922,6 @@ fail:
 				ramClass->hostClass = ramClass;
 			}
 
-			/* Fill in the package ID. The final packageID may differ in value from this one,
-			 * but it will certainly represent the same package, so this ID is valid for
-			 * as long as the classTableMutex is held.
-			 *
-			 * The final packageID is filled in once everything else is done.
-			 */
-			ramClass->packageID = packageID;
-
 			/* Initialize the methods. */
 			if (romClass->romMethodCount != 0) {
 				J9Method *currentRAMMethod = ramClass->ramMethods;
