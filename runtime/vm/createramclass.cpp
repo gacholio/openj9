@@ -2254,7 +2254,9 @@ nativeOOM:
 			}
 		}
 
+#if !(defined(LINUX) && defined(J9VM_ENV_DATA64) && defined(J9VM_ARCH_X86))
 		j9thread_sleep(100);
+#endif
 
 		/* Fill in the final packageID */
 		UDATA packageID = 0;
