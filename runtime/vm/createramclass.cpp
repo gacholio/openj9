@@ -2254,6 +2254,8 @@ nativeOOM:
 			}
 		}
 
+		j9thread_sleep(100);
+
 		/* Fill in the final packageID */
 		UDATA packageID = 0;
 		if (fastHCR) {
