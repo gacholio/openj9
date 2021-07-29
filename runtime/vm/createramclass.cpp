@@ -2193,15 +2193,18 @@ nativeOOM:
 			}
 		}
 
-		/* Ensure all previous writes have completed before making the new class visible. */
-		VM_AtomicSupport::writeBarrier();
-
 		/* Put the new class in the table or arrayClass field. */
-		if ((!fastHCR)
-			&& (0 == J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass))
-			&& J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)
-		) {
-			if (hashClassTableAtPut(vmThread, classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className), state->ramClass)) {
+		if (fastHCR) {
+			state->ramClass->packageID = state->classBeingRedefined->packageID;
+		} else if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) || J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
+			state->ramClass->packageID = (UDATA)classLoader;
+			if (J9ROMCLASS_IS_ARRAY(romClass)) {
+				((J9ArrayClass *)elementClass)->arrayClass = state->ramClass;
+				/* Assigning into the arrayClass field creates an implicit reference to the class from its class loader */
+				javaVM->memoryManagerFunctions->j9gc_objaccess_postStoreClassToClassLoader(vmThread, classLoader, state->ramClass);
+			}
+		} else {
+			if (hashClassTableAddNew(vmThread, classLoader, state->ramClass, state->entryIndex, state->locationType, fastHCR, state->classBeingRedefined)) {
 				if (hotswapping) {
 					omrthread_monitor_exit(javaVM->classTableMutex);
 					state->ramClass = NULL;
@@ -2227,27 +2230,12 @@ nativeOOM:
 					}
 	
 					/* Try the store again - if it fails again, throw native OOM */
-					if (hashClassTableAtPut(vmThread, classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className), state->ramClass)) {
+					if (hashClassTableAddNew(vmThread, classLoader, state->ramClass, state->entryIndex, state->locationType, fastHCR, state->classBeingRedefined)) {
 						goto nativeOOM;
 					}
 				}
 			}
-		} else {
-			if (J9ROMCLASS_IS_ARRAY(romClass)) {
-				((J9ArrayClass *)elementClass)->arrayClass = state->ramClass;
-				/* Assigning into the arrayClass field creates an implicit reference to the class from its class loader */
-				javaVM->memoryManagerFunctions->j9gc_objaccess_postStoreClassToClassLoader(vmThread, classLoader, state->ramClass);
-			}
 		}
-
-		/* Fill in the final packageID */
-		UDATA packageID = 0;
-		if (fastHCR) {
-			packageID = state->classBeingRedefined->packageID;
-		} else {
-			packageID = hashPkgTableIDFor(vmThread, hostClassLoader, romClass, state->entryIndex, state->locationType);
-		}
-		state->ramClass->packageID = packageID;
 	}
 
 	omrthread_monitor_exit(javaVM->classTableMutex);
@@ -2907,14 +2895,6 @@ fail:
 			} else {
 				ramClass->hostClass = ramClass;
 			}
-
-			/* Fill in the package ID. The final packageID may differ in value from this one,
-			 * but it will certainly represent the same package, so this ID is valid for
-			 * as long as the classTableMutex is held.
-			 *
-			 * The final packageID is filled in once everything else is done.
-			 */
-			ramClass->packageID = packageID;
 
 			/* Initialize the methods. */
 			if (romClass->romMethodCount != 0) {

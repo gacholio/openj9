@@ -1855,6 +1855,12 @@ hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject);
 UDATA
 hashClassTableAtPut(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, J9Class *value);
 
+/**
+* @brief
+* @return UDATA
+*/
+UDATA
+hashClassTableAddNew(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *newClass, IDATA entryIndex, I_32 locationType);
 
 /**
 * @brief

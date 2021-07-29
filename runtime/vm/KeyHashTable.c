@@ -408,6 +408,40 @@ hashClassTableAtPut(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *class
 }
 
 UDATA
+hashClassTableAddNew(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *newClass, IDATA entryIndex, I_32 locationType)
+{
+	J9JavaVM *vm = vmThread->javaVM;
+	J9HashTable *table = classLoader->classHashTable;
+	KeyHashTableClassEntry *node = NULL;
+	KeyHashTableClassEntry entry;
+	UDATA rc = 1;
+	UDATA packageID = 0;
+
+	/* Initialize the package ID for the newly-added class */
+
+	packageID = hashPkgTableIDFor(vmThread, classLoader, newClass->romClass, entryIndex, locationType);
+	newClass->packageID = packageID;
+
+	/* Ensure all previous writes have completed before making the new class visible. */
+	VM_AtomicSupport::writeBarrier();
+
+	entry.ramClass = newClass;
+	node = hashTableAdd(table, &entry);
+
+	if (NULL == node) {
+		if (NULL == growClassHashTable(vm, classLoader, &entry)) {
+			goto done;
+		}
+	}
+
+	/* Issue a GC write barrier when modifying the class hash table */
+	vm->memoryManagerFunctions->j9gc_objaccess_postStoreClassToClassLoader(vmThread, classLoader, value);
+	rc = 0;
+done:
+	return rc;
+}
+
+UDATA
 hashClassTableDelete(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
 {
 	J9HashTable *table = classLoader->classHashTable;
