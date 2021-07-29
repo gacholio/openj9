@@ -423,7 +423,7 @@ hashClassTableAddNew(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *
 	newClass->packageID = packageID;
 
 	/* Ensure all previous writes have completed before making the new class visible. */
-	VM_AtomicSupport::writeBarrier();
+	issueWriteBarrier();
 
 	entry.ramClass = newClass;
 	node = hashTableAdd(table, &entry);
@@ -435,7 +435,7 @@ hashClassTableAddNew(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *
 	}
 
 	/* Issue a GC write barrier when modifying the class hash table */
-	vm->memoryManagerFunctions->j9gc_objaccess_postStoreClassToClassLoader(vmThread, classLoader, value);
+	vm->memoryManagerFunctions->j9gc_objaccess_postStoreClassToClassLoader(vmThread, classLoader, newClass);
 	rc = 0;
 done:
 	return rc;
