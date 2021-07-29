@@ -2197,13 +2197,15 @@ nativeOOM:
 		if (fastHCR) {
 			state->ramClass->packageID = state->classBeingRedefined->packageID;
 		} else if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass) || J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
-			state->ramClass->packageID = (UDATA)classLoader;
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
+				state->ramClass->packageID = (UDATA)classLoader;
 				/* Ensure all previous writes have completed before making the new class visible. */
 				VM_AtomicSupport::writeBarrier();
 				((J9ArrayClass *)elementClass)->arrayClass = state->ramClass;
 				/* Assigning into the arrayClass field creates an implicit reference to the class from its class loader */
 				javaVM->memoryManagerFunctions->j9gc_objaccess_postStoreClassToClassLoader(vmThread, classLoader, state->ramClass);
+			} else {
+				state->ramClass->packageID = hashPkgTableIDFor(vmThread, classLoader, romClass, state->entryIndex, state->locationType);
 			}
 		} else {
 			if (hashClassTableAddNew(vmThread, classLoader, state->ramClass, state->entryIndex, state->locationType)) {
