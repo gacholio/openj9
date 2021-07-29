@@ -2196,15 +2196,17 @@ nativeOOM:
 		/* Put the new class in the table or arrayClass field. */
 		if (fastHCR) {
 			state->ramClass->packageID = state->classBeingRedefined->packageID;
-		} else if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) || J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
+		} else if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass) || J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
 			state->ramClass->packageID = (UDATA)classLoader;
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
+				/* Ensure all previous writes have completed before making the new class visible. */
+				VM_AtomicSupport::writeBarrier();
 				((J9ArrayClass *)elementClass)->arrayClass = state->ramClass;
 				/* Assigning into the arrayClass field creates an implicit reference to the class from its class loader */
 				javaVM->memoryManagerFunctions->j9gc_objaccess_postStoreClassToClassLoader(vmThread, classLoader, state->ramClass);
 			}
 		} else {
-			if (hashClassTableAddNew(vmThread, classLoader, state->ramClass, state->entryIndex, state->locationType, fastHCR, state->classBeingRedefined)) {
+			if (hashClassTableAddNew(vmThread, classLoader, state->ramClass, state->entryIndex, state->locationType)) {
 				if (hotswapping) {
 					omrthread_monitor_exit(javaVM->classTableMutex);
 					state->ramClass = NULL;
@@ -2230,7 +2232,7 @@ nativeOOM:
 					}
 	
 					/* Try the store again - if it fails again, throw native OOM */
-					if (hashClassTableAddNew(vmThread, classLoader, state->ramClass, state->entryIndex, state->locationType, fastHCR, state->classBeingRedefined)) {
+					if (hashClassTableAddNew(vmThread, classLoader, state->ramClass, state->entryIndex, state->locationType)) {
 						goto nativeOOM;
 					}
 				}
