@@ -690,9 +690,6 @@ doVerify:
 				VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
 				/* Initialize the superclass */
 				J9Class *superclazz = VM_VMHelpers::getSuperclass(clazz);
-				J9ITable *superITable = NULL;
-				J9ITable *firstITable = NULL;
-				J9ITable *iTable = NULL;
 				if (NULL != superclazz) {
 					Trc_VM_classInitStateMachine_initSuperclass(currentThread);
 					PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
@@ -703,17 +700,23 @@ doVerify:
 					if (VM_VMHelpers::exceptionPending(currentThread)) {
 						goto initFailed;
 					}
-					superITable = (J9ITable*)superclazz->iTable;
 				}
 				/* Do not initialize the superinterfaces of interfaces */
 				if (!J9_ARE_ANY_BITS_SET(clazz->romClass->modifiers, J9AccInterface)) {
 					/* Initialize super-interfaces with non-static, non-abstract methods */
 					Trc_VM_classInitStateMachine_initSuperInterfacesWithNonStaticNonAbstractMethods(currentThread, clazz);
-					/* Don't traverse all iTables - indirect super-interfaces are initialized with the superclass */
-					firstITable = (J9ITable*)clazz->iTable;
-					iTable = firstITable;
-					while (iTable != superITable) {
-						J9Class *interfaceClazz = iTable->interfaceClass;
+					J9ROMClass *romClass = clazz->romClass;
+					J9SRP * interfaceNames = J9ROMCLASS_INTERFACES(romClass);
+					U_32 interfaceCount = romClass->interfaceCount;
+					U_32 i = 0;
+
+					for (i = 0; i < interfaceCount; i++) {
+						J9UTF8 *interfaceName = SRP_PTR_GET(&interfaceNames[i], J9UTF8*);
+
+						/* The interfaces for this class are guaranteed to already be loaded */
+
+						J9Class *interfaceClazz = vm->internalVMFunctions->internalFindClassUTF8(currentThread, J9UTF8_DATA(interfaceName), J9UTF8_LENGTH(interfaceName),
+							clazz->classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
 						if (J9_ARE_ANY_BITS_SET(interfaceClazz->romClass->extraModifiers, J9AccClassHasNonStaticNonAbstractMethods)) {
 							PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
 							classInitStateMachine(currentThread, interfaceClazz, J9_CLASS_INIT_INITIALIZED);
@@ -722,17 +725,7 @@ doVerify:
 							if (VM_VMHelpers::exceptionPending(currentThread)) {
 								goto initFailed;
 							}
-							/* Ensure that we are still traversing a valid iTable chain */
-							if (firstITable != (J9ITable*)clazz->iTable) {
-								iTable = (J9ITable*)clazz->iTable;
-								if (NULL != superclazz) {
-									superclazz = VM_VMHelpers::getSuperclass(clazz);
-									superITable = (J9ITable*)superclazz->iTable;
-								}
-								continue;
-							}
 						}
-						iTable = iTable->next;
 					}
 				}
 
