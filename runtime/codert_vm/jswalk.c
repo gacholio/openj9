@@ -648,7 +648,12 @@ static void walkJITFrameSlots(J9StackWalkState * walkState, U_8 * jitDescription
 		}
 		else if (*stackAllocMapBits & 1)
 		{
+#if 1
+			j9object_t stackAllocated = (j9object_t)scanCursor;
+			WALK_O_SLOT(&stackAllocated);
+#else
 			jitWalkStackAllocatedObject(walkState, (j9object_t)scanCursor);
+#endif
 		}
 		else
 		{
