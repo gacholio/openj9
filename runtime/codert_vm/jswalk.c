@@ -65,7 +65,7 @@
 	(walkState)->decompilationRecord = NULL
 #else
 #define UPDATE_PC_FROM(walkState, pcExpression) (walkState)->pc = MASK_PC((U_8 *) (pcExpression))
-#define jitGetExceptionTable(walkState) jitGetExceptionTableFromPC((walkState)->walkThread, (UDATA) (walkState)->pc)
+#define jitGetExceptionTable(walkState) jitGetExceptionTableFromPC((walkState)->currentThread, (UDATA) (walkState)->pc)
 #endif
 
 #ifdef J9VM_JIT_FULL_SPEED_DEBUG
@@ -1421,7 +1421,7 @@ static J9JITExceptionTable * jitGetExceptionTable(J9StackWalkState * walkState)
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	J9JITDecompilationInfo * stack;
 #endif
-	J9JITExceptionTable * result = jitGetExceptionTableFromPC(walkState->walkThread, (UDATA) walkState->pc);
+	J9JITExceptionTable * result = jitGetExceptionTableFromPC(walkState->currentThread, (UDATA) walkState->pc);
 
 	if (result) return result;
 
@@ -1438,7 +1438,7 @@ static J9JITExceptionTable * jitGetExceptionTable(J9StackWalkState * walkState)
 			}
 			walkState->decompilationRecord = walkState->decompilationStack;
 			walkState->decompilationStack = walkState->decompilationStack->next;
-			return jitGetExceptionTableFromPC(walkState->walkThread, (UDATA) walkState->pc);
+			return jitGetExceptionTableFromPC(walkState->currentThread, (UDATA) walkState->pc);
 		}
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 		stack = walkState->decompilationStack;
@@ -1483,6 +1483,15 @@ typedef struct TR_jit_artifact_search_cache
 J9JITExceptionTable * jitGetExceptionTableFromPC(J9VMThread * vmThread, UDATA jitPC)
 {
 	UDATA maskedPC = (UDATA)MASK_PC(jitPC);
+	J9VMThread *currentThread = vmThread->javaVM->internalVMFunctions->currentVMThread(vmThread->javaVM);
+	if (currentThread != vmThread) {
+#if defined(J9VM_INTERP_STACKWALK_TRACING)
+		Assert_VRB_ShouldNeverHappen();
+#else /* J9VM_INTERP_STACKWALK_TRACING */
+		Assert_VM_unreachable();
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
+
+    }
 #ifdef J9JIT_ARTIFACT_SEARCH_CACHE_ENABLE
 	TR_jit_artifact_search_cache *artifactSearchCache = vmThread->jitArtifactSearchCache;
 	if (J9_ARE_NO_BITS_SET((UDATA)artifactSearchCache, J9_STACKWALK_NO_JIT_CACHE)) {
