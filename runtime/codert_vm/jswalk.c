@@ -1485,12 +1485,9 @@ J9JITExceptionTable * jitGetExceptionTableFromPC(J9VMThread * vmThread, UDATA ji
 	UDATA maskedPC = (UDATA)MASK_PC(jitPC);
 	J9VMThread *currentThread = vmThread->javaVM->internalVMFunctions->currentVMThread(vmThread->javaVM);
 	if (currentThread != vmThread) {
-#if defined(J9VM_INTERP_STACKWALK_TRACING)
-		Assert_VRB_ShouldNeverHappen();
-#else /* J9VM_INTERP_STACKWALK_TRACING */
-		Assert_VM_unreachable();
-#endif /* J9VM_INTERP_STACKWALK_TRACING */
-
+		PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
+		j9tty_printf(PORTLIB, "xtbl: vmthread %p current %p\n");
+		*(UDATA*)-1=-1;
     }
 #ifdef J9JIT_ARTIFACT_SEARCH_CACHE_ENABLE
 	TR_jit_artifact_search_cache *artifactSearchCache = vmThread->jitArtifactSearchCache;
