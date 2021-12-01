@@ -165,3 +165,7 @@ TraceAssert=Assert_Decomp_breakpointFailed noEnv Overhead=1 Level=1 Assert="(0 /
 TraceAssert=Assert_CodertVM_mustHaveVMAccess noEnv overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
 
 TraceEvent=Trc_Decomp_jitExceptionCaught_SyntheticHandler Overhead=1 Level=1 Template="jitExceptionCaught - synthetic handler - do not report or decompile"
+
+TraceEvent=Trc_JSWalk_resolveFrame Overhead=1 Level=1 Template="resolveFrame sp %p walkSP %p a0 %p pc %p lit %p flags %p unwind %p"
+TraceEvent=Trc_JSWalk_unwind Overhead=1 Level=1 Template="unwind sp %p walkSP %p a0 %p pc %p lit %p"
+TraceEvent=Trc_JSWalk_interp Overhead=1 Level=1 Template="interp sp %p walkSP %p a0 %p pc %p lit %p"

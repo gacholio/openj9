@@ -257,7 +257,9 @@ resumeNonInline:
 		}
 
 		UNWIND_TO_NEXT_FRAME(walkState);
-
+#ifndef J9VM_INTERP_LINEAR_STACKWALK_TRACING
+		Trc_JSWalk_unwind(walkState->currentThread, walkState->sp, walkState->walkSP, walkState->arg0EA, walkState->pc, walkState->literals);
+#endif
 	}
 
 	/* JIT pair with no mapping indicates a bytecoded frame */
@@ -301,6 +303,8 @@ i2jTransition: ;
 		0, 0
 #endif
 		);
+#else
+	Trc_JSWalk_interp(walkState->currentThread, walkState->sp, walkState->walkSP, walkState->arg0EA, walkState->pc, walkState->literals);
 #endif
 
 	walkState->dropToCurrentFrame = savedDropToCurrentFrame;
@@ -359,6 +363,10 @@ static UDATA walkTransitionFrame(J9StackWalkState *walkState)
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 		lswRecord(walkState, LSW_TYPE_RESOLVE_FRAME_TYPE, (void*)resolveFrameType);
 #endif		
+#ifndef J9VM_INTERP_STACKWALK_TRACING
+		Trc_JSWalk_resolveFrame(walkState->currentThread, walkState->sp, walkState->walkSP, walkState->arg0EA, walkState->pc, walkState->literals,
+				walkState->resolveFrameFlags, walkState->unwindSP);
+#endif
 
 		if (resolveFrameType == J9_STACK_FLAGS_JIT_DATA_RESOLVE) {
 			if (walkState->flags & J9_STACKWALK_MAINTAIN_REGISTER_MAP) {
@@ -420,6 +428,9 @@ static UDATA walkTransitionFrame(J9StackWalkState *walkState)
 				}
 
 				UNWIND_TO_NEXT_FRAME(walkState);
+#ifndef J9VM_INTERP_LINEAR_STACKWALK_TRACING
+				Trc_JSWalk_unwind(walkState->currentThread, walkState->sp, walkState->walkSP, walkState->arg0EA, walkState->pc, walkState->literals);
+#endif
 			}
 		}
 	} else if (walkState->frameFlags & J9_STACK_FLAGS_JIT_JNI_CALL_OUT_FRAME) {
