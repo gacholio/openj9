@@ -261,6 +261,7 @@ restart:
 				 */
 				j9objectmonitor_t lock = J9_LOAD_LOCKWORD(currentThread, lwEA);
 				lock |= OBJECT_HEADER_LOCK_FLC;
+				Assert_VM_false((OBJECT_HEADER_LOCK_FLC + OBJECT_HEADER_LOCK_INFLATED) == (lock & (OBJECT_HEADER_LOCK_FLC + OBJECT_HEADER_LOCK_INFLATED)));
 				J9_STORE_LOCKWORD(currentThread, lwEA, lock);
 				goto done;
 			}
@@ -358,6 +359,7 @@ restart:
 			 */
 			if (0 == (lock & OBJECT_HEADER_LOCK_LEARNING)) {
 				/* Flat and Reserved state case */
+				Assert_VM_false((OBJECT_HEADER_LOCK_FLC + OBJECT_HEADER_LOCK_INFLATED) == (lock & (OBJECT_HEADER_LOCK_FLC + OBJECT_HEADER_LOCK_INFLATED)));
 				J9_STORE_LOCKWORD(currentThread, lwEA, incremented);
 			} else {
 				/*

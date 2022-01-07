@@ -118,6 +118,7 @@ restart:
 		} else if (count >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) {
 			/* just decrement the flatlock recursion count */
 			lock -= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT;
+			Assert_VM_false((OBJECT_HEADER_LOCK_FLC + OBJECT_HEADER_LOCK_INFLATED) == (lock & (OBJECT_HEADER_LOCK_FLC + OBJECT_HEADER_LOCK_INFLATED)));
 			J9_STORE_LOCKWORD(vmStruct, lockEA, lock);
 #ifdef J9VM_THR_LOCK_RESERVATION
 		} else if (count & OBJECT_HEADER_LOCK_RESERVED) {
@@ -256,6 +257,7 @@ objectMonitorInflate(J9VMThread* vmStruct, j9object_t object, UDATA lock)
 	/* set the count to be the current thread's count */
 	((J9ThreadAbstractMonitor*)monitor)->count = J9_FLATLOCK_COUNT(lock);	
 
+	Assert_VM_false((OBJECT_HEADER_LOCK_FLC + OBJECT_HEADER_LOCK_INFLATED) == (((UDATA)objectMonitor | OBJECT_HEADER_LOCK_INFLATED) & (OBJECT_HEADER_LOCK_FLC + OBJECT_HEADER_LOCK_INFLATED)));
 	if (!LN_HAS_LOCKWORD(vmStruct,object)) {
 		J9_STORE_LOCKWORD(vmStruct, &objectMonitor->alternateLockword, (j9objectmonitor_t)((UDATA)objectMonitor | OBJECT_HEADER_LOCK_INFLATED));
 	} else {

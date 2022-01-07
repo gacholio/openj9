@@ -3635,7 +3635,11 @@ retry:
 
 done:
 	/* Ensure the loading stack is the same on exit as it was on entry */
-	Assert_VM_true(loadingStack == vmThread->classLoadingStack);
+	if (loadingStack != vmThread->classLoadingStack) {
+		PORT_ACCESS_FROM_VMC(vmThread);
+		j9tty_printf(PORTLIB, "\n<%p> local stack = %p, thread stack = %p\n", vmThread, loadingStack, vmThread->classLoadingStack);
+		Assert_VM_true(loadingStack == vmThread->classLoadingStack);
+	}
 
 	return result;
 }
