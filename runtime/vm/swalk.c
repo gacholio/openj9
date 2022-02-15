@@ -1583,6 +1583,9 @@ dropToCurrentFrame(J9StackWalkState * walkState)
 	vmThread->literals = NULL;
 	vmThread->pc = (U_8 *) J9SF_FRAME_TYPE_GENERIC_SPECIAL;
 	vmThread->sp = (UDATA *) specialFrame;
+	if (vmThread->inNative || (0 == (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+		*(UDATA*)-1=-1;
+	}
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	vmThread->j2iFrame = walkState->j2iFrame;
 #ifdef J9VM_JIT_FULL_SPEED_DEBUG

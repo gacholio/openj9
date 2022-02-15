@@ -595,6 +595,9 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 				_currentThread->pc = currentTypeFrame->savedPC;
 				_currentThread->arg0EA = UNTAGGED_A0(currentTypeFrame);
 				_currentThread->sp = spPriorToFrameBuild;
+				if (_currentThread->inNative || (0 == (_currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+					*(UDATA*)-1=-1;
+				}
 			} else {
 				nextAction = THROW_WRONG_METHOD_TYPE;
 				goto done;
@@ -680,6 +683,9 @@ VM_MHInterpreter::impdep1()
 		_currentThread->literals = frame->savedCP;
 		_currentThread->pc = frame->savedPC + 3;
 		_currentThread->arg0EA =  UNTAGGED_A0(frame);
+		if (_currentThread->inNative || (0 == (_currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 	} else if (J9VMJAVALANGINVOKEMETHODHANDLE_RETURNFILTERPLACEHOLDER_METHOD(_vm) == _currentThread->literals) {
 		rc = GOTO_RUN_METHODHANDLE;
 		/* Get the filterHandle.type.arguments[0] to determine the kind of value on the stack */
@@ -704,6 +710,9 @@ VM_MHInterpreter::impdep1()
 		_currentThread->literals = frame->savedCP;
 		_currentThread->pc = frame->savedPC;
 		_currentThread->arg0EA = UNTAGGED_A0(frame);
+		if (_currentThread->inNative || (0 == (_currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 		if (0 != returnSlots) {
 			_currentThread->sp[0] = returnValue0;
 			if (2 == returnSlots) {
@@ -735,6 +744,9 @@ VM_MHInterpreter::impdep1()
 		_currentThread->pc = mtFrame->savedPC;
 		_currentThread->arg0EA = UNTAGGED_A0(mtFrame);
 		_currentThread->sp = mhPtr - guardArgSlots;
+		if (_currentThread->inNative || (0 == (_currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 
 		/* Overwrite initial GWT_Handle with either GWT_Handle.trueTarget or GWT_Handle.falseTarget based upon testHandleReturnValue */
 		j9object_t nextHandle = NULL;
@@ -829,6 +841,9 @@ VM_MHInterpreter::impdep1()
 			_currentThread->pc = mtParentFrame->savedPC;
 			_currentThread->arg0EA = UNTAGGED_A0(mtParentFrame);
 			_currentThread->sp = destPtr - nextArgSlots;
+			if (_currentThread->inNative || (0 == (_currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+				*(UDATA*)-1=-1;
+			}
 
 			/* [... FAH.next UpdatedArgs] */
 			memmove(destPtr - nextArgSlots, srcPtr - nextArgSlots, (nextArgSlots + 1) * sizeof(UDATA *));
@@ -903,6 +918,9 @@ VM_MHInterpreter::convertArgumentsForAsType(j9object_t methodHandle)
 		_currentThread->literals = currentTypeFrame->savedCP;
 		_currentThread->pc = currentTypeFrame->savedPC;
 		_currentThread->arg0EA = UNTAGGED_A0(currentTypeFrame);
+		if (_currentThread->inNative || (0 == (_currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 	} else {
 		/* If we don't require boxing, do the operations on the java stack
 		 * but don't move the sp until the operations are complete or an exception is thrown
@@ -1009,6 +1027,9 @@ VM_MHInterpreter::doInvokeGeneric(j9object_t methodHandle)
 		_currentThread->pc = currentTypeFrame->savedPC;
 		_currentThread->arg0EA = UNTAGGED_A0(currentTypeFrame);
 		_currentThread->sp = spPriorToFrameBuild;
+		if (_currentThread->inNative || (0 == (_currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 
 		/* Swap in the asType */
 		*(j9object_t*)(_currentThread->sp + slotsOffsetToTargetHandle) = targetHandle;
@@ -1506,6 +1527,9 @@ VM_MHInterpreter::insertReturnValueForFoldArguments()
 	_currentThread->pc = mtFrame->savedPC;
 	_currentThread->arg0EA = UNTAGGED_A0(mtFrame);
 	_currentThread->sp = mhPtr - foldArgSlots;
+	if (_currentThread->inNative || (0 == (_currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+		*(UDATA*)-1=-1;
+	}
 
 	/* Overwrite initial foldHandle with foldHandle.next */
 	j9object_t nextHandle = J9VMJAVALANGINVOKEFOLDHANDLE_NEXT(_currentThread, foldHandle);

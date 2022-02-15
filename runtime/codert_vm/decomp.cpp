@@ -710,6 +710,9 @@ buildBytecodeFrame(J9VMThread *currentThread, J9OSRFrame *osrFrame)
 	currentThread->pc = bytecodePC;
 	currentThread->literals = method;
 	currentThread->sp = sp;
+	if (currentThread->inNative || (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+		*(UDATA*)-1=-1;
+	}
 }
 
 

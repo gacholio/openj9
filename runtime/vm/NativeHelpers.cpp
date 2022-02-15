@@ -203,6 +203,9 @@ buildMethodTypeFrame(J9VMThread * currentThread, j9object_t methodType)
 	currentThread->pc = (U_8 *) J9SF_FRAME_TYPE_METHODTYPE;
 	currentThread->literals = NULL;
 	currentThread->arg0EA = newA0;
+	if (currentThread->inNative || (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+		*(UDATA*)-1=-1;
+	}
 
 	return methodTypeFrame;
 #undef ROUND_U32_TO

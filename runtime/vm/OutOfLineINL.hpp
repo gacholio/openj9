@@ -99,7 +99,10 @@ public:
  		*--currentThread->sp = (flags);
  		currentThread->pc = (U_8*)(type);
  		currentThread->literals = NULL;
- 		return bp;
+	 	if (currentThread->inNative || (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
+	 	return bp;
  	}
  	
  	static VMINLINE UDATA
@@ -117,6 +120,9 @@ public:
  		currentThread->literals = (J9Method*)(bp[-2]);
  		currentThread->pc = (U_8*)(bp[-1]);
  		currentThread->arg0EA = (UDATA*)(bp[0] & ~(UDATA)J9SF_A0_INVISIBLE_TAG);
+	 	if (currentThread->inNative || (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
  	}
  	
  	static VMINLINE UDATA*

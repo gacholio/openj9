@@ -49,6 +49,9 @@ jitPushResolveFrame(J9VMThread* vmThread, UDATA* sp, U_8* pc)
 	vmThread->arg0EA = (UDATA *) &(resolveFrame->taggedRegularReturnSP);
 	vmThread->literals = NULL;
 	vmThread->sp = (UDATA *) resolveFrame;
+	if (vmThread->inNative || (0 == (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+		*(UDATA*)-1=-1;
+	}
 
 	return resolveFrame;
 }

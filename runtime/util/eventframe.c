@@ -61,6 +61,9 @@ popEventFrame(J9VMThread * currentThread, UDATA hadVMAccess)
 	currentThread->literals = frame->savedCP;
 	currentThread->pc = frame->savedPC;
 	currentThread->sp = spAfterPop;
+	if (currentThread->inNative || (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+		*(UDATA*)-1=-1;
+	}
 
 	/* Release VM access unless the current thread had it before reporting the event */
 

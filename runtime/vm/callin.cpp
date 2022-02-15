@@ -324,6 +324,9 @@ buildCallInStackFrame(J9VMThread *currentThread, J9VMEntryLocalStorage *newELS, 
 	currentThread->pc = currentThread->javaVM->callInReturnPC;
 	currentThread->literals = 0;
 	currentThread->arg0EA = (UDATA*)&frame->savedA0;
+	if (currentThread->inNative || (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+		*(UDATA*)-1=-1;
+	}
 	newELS->oldEntryLocalStorage = oldELS;
 	currentThread->entryLocalStorage = newELS;
 #if defined(WIN32) && !defined(J9VM_ENV_DATA64)
@@ -369,6 +372,9 @@ restoreCallInFrame(J9VMThread *currentThread)
 	currentThread->pc = frame->savedPC;
 	currentThread->arg0EA = (UDATA*)((UDATA)frame->savedA0 & ~(UDATA)J9SF_A0_INVISIBLE_TAG);
 	currentThread->sp = (UDATA*)(frame + 1);
+	if (currentThread->inNative || (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+		*(UDATA*)-1=-1;
+	}
 	if (VM_VMHelpers::exceptionPending(currentThread) || VM_VMHelpers::immediateAsyncPending(currentThread)) {
 		currentThread->returnValue = 0;
 		currentThread->returnValue2 = 0;

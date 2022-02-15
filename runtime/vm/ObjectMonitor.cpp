@@ -88,6 +88,9 @@ saveBlockingEnterObject(J9VMThread *currentThread)
 		currentThread->sp = (UDATA*)frame;
 		currentThread->pc = (U_8*)J9SF_FRAME_TYPE_GENERIC_SPECIAL;
 		currentThread->arg0EA = (UDATA*)&(frame->savedA0);
+		if (currentThread->inNative || (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 	}
 	PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, J9VMTHREAD_BLOCKINGENTEROBJECT(currentThread, currentThread));
 	return frameBuilt;
@@ -113,6 +116,9 @@ restoreBlockingEnterObject(J9VMThread *currentThread, bool collapseFrame)
 		currentThread->pc = frame->savedPC;
 		currentThread->arg0EA = (UDATA*)(((UDATA)frame->savedA0) & ~(UDATA)J9SF_A0_INVISIBLE_TAG);
 		currentThread->sp = (UDATA*)(frame + 1);
+		if (currentThread->inNative || (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 	}
 	return object;
 }

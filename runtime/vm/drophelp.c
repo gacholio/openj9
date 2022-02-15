@@ -93,5 +93,8 @@ prepareForExceptionThrow(J9VMThread *currentThread)
 		currentThread->sp = (UDATA *) specialFrame;
 		currentThread->pc = (U_8 *) J9SF_FRAME_TYPE_GENERIC_SPECIAL;
 		currentThread->literals = NULL;
+		if (currentThread->inNative || (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 	}
 }

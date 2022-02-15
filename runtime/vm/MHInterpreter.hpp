@@ -297,6 +297,9 @@ foundITable:
 		_currentThread->pc = frame->savedPC;
 		_currentThread->arg0EA = UNTAGGED_A0(frame);
 		_currentThread->sp = spPriorToFrameBuild;
+		if (_currentThread->inNative || (0 == (_currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 	}
 
 	/**
@@ -322,6 +325,9 @@ foundITable:
 		_currentThread->literals = placeHolderMethod;
 		_currentThread->pc = _vm->impdep1PC;
 		_currentThread->arg0EA = originalSP + slotCount;
+		if (_currentThread->inNative || (0 == (_currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 	}
 
 	/**
@@ -350,6 +356,9 @@ foundITable:
 		_currentThread->literals = placeHolderMethod;
 		_currentThread->pc = _vm->impdep1PC;
 		_currentThread->arg0EA = originalSP + slotCount;
+		if (_currentThread->inNative || (0 == (_currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 		*(U_32 *)(_currentThread->arg0EA - 1) = preservedValue1;
 		*(U_32 *)(_currentThread->arg0EA - 2) = preservedValue2;
 		*(U_32 *)(_currentThread->arg0EA - 3) = preservedValue3;

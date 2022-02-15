@@ -63,7 +63,7 @@
 #include "LayoutFFITypeHelpers.hpp"
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
-#if 0
+#if 1
 #define DEBUG_MUST_HAVE_VM_ACCESS(vmThread) Assert_VM_mustHaveVMAccess(vmThread)
 #else
 #define DEBUG_MUST_HAVE_VM_ACCESS(vmThread)
@@ -352,6 +352,9 @@ retry:
 		thread->sp = _sp;
 		thread->pc = _pc;
 		thread->literals = _literals;
+		if (thread->inNative || (0 == (thread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))) {
+			*(UDATA*)-1=-1;
+		}
 	}
 
 	VMINLINE void
