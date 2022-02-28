@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,7 +71,7 @@ static void freeExtensionEventInfo (jvmtiEnv* env, jvmtiExtensionEventInfo* info
 static jvmtiError JNICALL jvmtiTriggerVmDump (jvmtiEnv* jvmti_env, ...);
 static jvmtiError JNICALL jvmtiGetOSThreadID(jvmtiEnv* jvmti_env, jthread thread, jlong * threadid_ptr, ...);
 
-static jvmtiError JNICALL jvmtiGetStackTraceExtended(jvmtiEnv* env, jint type, jthread thread, jint start_depth, jint max_frame_count, void* frame_buffer, jint* count_ptr, ...);
+static jvmtiError JNICALL jvmtiGetStackTraceExtended(jvmtiEnv* env, ...);
 static jvmtiError JNICALL jvmtiGetAllStackTracesExtended(jvmtiEnv* env, jint type, jint max_frame_count, void** stack_info_ptr, jint* thread_count_ptr, ...);
 static jvmtiError JNICALL jvmtiGetThreadListStackTracesExtended(jvmtiEnv* env, jint type, jint thread_count, const jthread* thread_list, jint max_frame_count, void** stack_info_ptr, ...);
 static jvmtiError jvmtiInternalGetStackTraceExtended(jvmtiEnv* env, J9JVMTIStackTraceType type, J9VMThread * currentThread, J9VMThread * targetThread, jint start_depth, UDATA max_frame_count, jvmtiFrameInfo* frame_buffer, jint* count_ptr);
@@ -552,7 +552,7 @@ static const J9JVMTIExtensionFunctionInfo J9JVMTIExtensionFunctionInfoTable[] = 
 		SIZE_AND_TABLE(get_os_thread_id_errors)
 	},
 	{
-		(jvmtiExtensionFunction) jvmtiGetStackTraceExtended,
+		jvmtiGetStackTraceExtended,
 		COM_IBM_GET_STACK_TRACE_EXTENDED,
 		J9NLS_JVMTI_COM_IBM_GET_STACK_TRACE_EXTENDED_DESCRIPTION,
 		SIZE_AND_TABLE(jvmtiGetStackTraceExtended_params),
@@ -1451,18 +1451,30 @@ done:
 }
 
 static jvmtiError JNICALL
-jvmtiGetStackTraceExtended(jvmtiEnv* env,
-	jint type,
-	jthread thread,
-	jint start_depth,
-	jint max_frame_count,
-	void* frame_buffer,
-	jint* count_ptr, ...)
+jvmtiGetStackTraceExtended(jvmtiEnv* env, ...)
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	jint rv_count = 0;
+
+
+	jint type;
+	jthread thread;
+	jint start_depth;
+	jint max_frame_count;
+	void* frame_buffer;
+	jint* count_ptr;
+
+	va_list args;
+	va_start(args, jvmti_env);
+	type = va_arg(args, jint);
+	thread = va_arg(args, jthread);
+	start_depth = va_arg(args, jint);
+	max_frame_count = va_arg(args, jint);
+	frame_buffer = va_arg(args, void*);
+	count_ptr = va_arg(args, jint*);
+	va_end(args);
 
 	Trc_JVMTI_jvmtiGetStackTraceExtended_Entry(env);
 
