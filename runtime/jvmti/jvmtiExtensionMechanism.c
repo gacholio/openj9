@@ -782,10 +782,10 @@ static const J9JVMTIExtensionEventInfo J9JVMTIExtensionEventInfoTable[] = {
 #define NUM_EXTENSION_EVENTS (sizeof(J9JVMTIExtensionEventInfoTable) / sizeof(J9JVMTIExtensionEventInfoTable[0]))
 
 static void
-decodeVarargs(va_list functionArgs, jint count, jvmtiParamInfo *params, ...)
+decodeVarargs(va_list functionArgs, jint count, const jvmtiParamInfo *params, ...)
 {
 	va_list variables;
-	va_start(variables, info);
+	va_start(variables, params);
 	while (0 != count) {
 		void **var = va_arg(variables, void*);
 		if (JVMTI_KIND_IN == params->kind) {
