@@ -781,6 +781,55 @@ static const J9JVMTIExtensionEventInfo J9JVMTIExtensionEventInfoTable[] = {
 
 #define NUM_EXTENSION_EVENTS (sizeof(J9JVMTIExtensionEventInfoTable) / sizeof(J9JVMTIExtensionEventInfoTable[0]))
 
+static void
+decodeVarargs(va_list functionArgs, J9JVMTIExtensionFunctionInfo *info, ...)
+{
+	jint count = info->param_count;
+	const jvmtiParamInfo *params = info->params;
+	va_list variables;
+	va_start(variables, info);
+	while (0 != count) {
+		void **var = va_arg(variables, void*);
+		if (JVMTI_KIND_IN == params->kind) {
+			switch(params->base_type) {
+			case JVMTI_TYPE_JBYTE:
+			case JVMTI_TYPE_JBOOLEAN:
+			case JVMTI_TYPE_CCHAR:
+				*(jbyte*)var = va_arg(functionArgs, jbyte);
+				break;
+			case JVMTI_TYPE_JCHAR:
+			case JVMTI_TYPE_JSHORT:
+				*(jshort*)var = va_arg(functionArgs, jshort);
+				break;
+			case JVMTI_TYPE_JINT:
+				*(jint*)var = va_arg(functionArgs, jint);
+				break;
+			case JVMTI_TYPE_JLONG:
+				*(jlong*)var = va_arg(functionArgs, jlong);
+				break;
+			case JVMTI_TYPE_JFLOAT:
+				*(jfloat*)var = va_arg(functionArgs, jfloat);
+				break;
+			case JVMTI_TYPE_JDOUBLE:
+				*(jdouble*)var = va_arg(functionArgs, jdouble);
+				break;
+			case JVMTI_TYPE_JVALUE:
+				*(jvalue*)var = va_arg(functionArgs, jvalue);
+				break;
+			default: /* All other valid types are pointers */
+ptr:
+				*var = va_arg(functionArgs, void*);
+				break;
+			}
+		} else {
+			/* Anything that's not a strictly input parameter is passed as a pointer */
+			goto ptr;
+		}
+		params += 1;
+		count -= 1;
+	}
+	va_end(variables);
+}
 
 jvmtiError JNICALL
 jvmtiGetExtensionFunctions(jvmtiEnv* env,
@@ -1467,13 +1516,8 @@ jvmtiGetStackTraceExtended(jvmtiEnv* env, ...)
 	jint* count_ptr;
 
 	va_list args;
-	va_start(args, jvmti_env);
-	type = va_arg(args, jint);
-	thread = va_arg(args, jthread);
-	start_depth = va_arg(args, jint);
-	max_frame_count = va_arg(args, jint);
-	frame_buffer = va_arg(args, void*);
-	count_ptr = va_arg(args, jint*);
+	va_start(args, env);
+	decodeVarargs(args, jvmtiGetStackTraceExtended_params, &type, &thread, &start_depth, &max_frame_count, &frame_buffer, &count_ptr);
 	va_end(args);
 
 	Trc_JVMTI_jvmtiGetStackTraceExtended_Entry(env);
