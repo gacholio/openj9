@@ -782,10 +782,8 @@ static const J9JVMTIExtensionEventInfo J9JVMTIExtensionEventInfoTable[] = {
 #define NUM_EXTENSION_EVENTS (sizeof(J9JVMTIExtensionEventInfoTable) / sizeof(J9JVMTIExtensionEventInfoTable[0]))
 
 static void
-decodeVarargs(va_list functionArgs, J9JVMTIExtensionFunctionInfo *info, ...)
+decodeVarargs(va_list functionArgs, jint count, jvmtiParamInfo *params, ...)
 {
-	jint count = info->param_count;
-	const jvmtiParamInfo *params = info->params;
 	va_list variables;
 	va_start(variables, info);
 	while (0 != count) {
@@ -1507,17 +1505,16 @@ jvmtiGetStackTraceExtended(jvmtiEnv* env, ...)
 	J9VMThread * currentThread;
 	jint rv_count = 0;
 
-
+	/* Varargs parameters */
 	jint type;
 	jthread thread;
 	jint start_depth;
 	jint max_frame_count;
 	void* frame_buffer;
 	jint* count_ptr;
-
 	va_list args;
 	va_start(args, env);
-	decodeVarargs(args, jvmtiGetStackTraceExtended_params, &type, &thread, &start_depth, &max_frame_count, &frame_buffer, &count_ptr);
+	decodeVarargs(args, SIZE_AND_TABLE(jvmtiGetStackTraceExtended_params), &type, &thread, &start_depth, &max_frame_count, &frame_buffer, &count_ptr);
 	va_end(args);
 
 	Trc_JVMTI_jvmtiGetStackTraceExtended_Entry(env);
