@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,6 +96,7 @@ static jvmtiTest jvmtiTestList[] =
 	{ "rc019b", rc019b, "com.ibm.jvmti.tests.redefineClasses.rc019b", "RedefineClasses" },
 	{ "rc020", rc020, "com.ibm.jvmti.tests.redefineClasses.rc020", "RedefineClasses" },
 	{ "rc021", rc021, "com.ibm.jvmti.tests.redefineClasses.rc021", "RedefineClasses" },
+	{ "rc050", rc050, "com.ibm.jvmti.tests.redefineClasses.rc050", "RedefineClasses" },
 	{ "gtgc001", gtgc001, "com.ibm.jvmti.tests.getThreadGroupChildren.gtgc001", "GetThreadGroupChildren" },
 	{ "gtgc002", gtgc002, "com.ibm.jvmti.tests.getThreadGroupChildren.gtgc002", "3 bytes name buffer overflow" },
 	{ "gts001", gts001, "com.ibm.jvmti.tests.getThreadState.gts001", "GetThreadState" },
