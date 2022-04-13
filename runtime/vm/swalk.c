@@ -553,7 +553,7 @@ static UDATA allocateCache(J9StackWalkState * walkState)
 	}
 #endif
 
-	if ((walkState != walkState->walkThread->stackWalkState) || ((UDATA) (sp - stackStart) < cacheSize)
+	if ((NULL == currentThread) || ((UDATA) (currentThread->sp - J9_LOWEST_STACK_SLOT(currentThread)) < cacheSize)
 #if defined (J9VM_INTERP_VERBOSE) || defined (J9VM_PROF_EVENT_REPORTING)
 		|| (walkState->walkThread->javaVM->runtimeFlags & J9_RUNTIME_PAINT_STACK)
 #endif
