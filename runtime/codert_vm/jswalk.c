@@ -770,7 +770,7 @@ static void jitWalkRegisterMap(J9StackWalkState *walkState, void *stackMap, J9JI
 
 #ifdef J9SW_JIT_FLOAT_ARGUMENT_REGISTER_COUNT
 
-#if defined(J9VM_ARCH_S390)
+#if defined(J9VM_ARCH_S390) && 0
 
 /* On 390, either vector or floating point registers are preserved in the ELS, not both.
  * Matching VRs and FPRs overlap, with the FPR contents in the high-order bits of the VR,
