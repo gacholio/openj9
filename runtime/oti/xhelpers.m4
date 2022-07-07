@@ -515,24 +515,30 @@ define({RESTORE_C_NONVOLATILE_REGS},{
 },{ dnl WIN32
 
 define({SAVE_C_VOLATILE_REGS},{
-	mov qword ptr J9TR_cframe_rax[_rsp],rax
-	mov qword ptr J9TR_cframe_rcx[_rsp],rcx
-	mov qword ptr J9TR_cframe_rdx[_rsp],rdx
-	mov qword ptr J9TR_cframe_rdi[_rsp],rdi
-	mov qword ptr J9TR_cframe_rsi[_rsp],rsi
-	mov qword ptr J9TR_cframe_r8[_rsp],r8
-	mov qword ptr J9TR_cframe_r9[_rsp],r9
-	mov qword ptr J9TR_cframe_r10[_rsp],r10
-	mov qword ptr J9TR_cframe_r11[_rsp],r11
+	mov qword ptr J9TR_VMThread_tempSlot[_rbp],rax
+	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
+	mov _rax,qword ptr J9TR_ELS_jitGlobalStorageBase[_rax]
+	mov qword ptr J9TR_savearea_rcx[_rax],rcx
+	mov qword ptr J9TR_savearea_rdx[_rax],rdx
+	mov qword ptr J9TR_savearea_rdi[_rax],rdi
+	mov qword ptr J9TR_savearea_rsi[_rax],rsi
+	mov qword ptr J9TR_savearea_r8[_rax],r8
+	mov qword ptr J9TR_savearea_r9[_rax],r9
+	mov qword ptr J9TR_savearea_r10[_rax],r10
+	mov qword ptr J9TR_savearea_r11[_rax],r11
+	mov _rcx,qword ptr J9TR_VMThread_tempSlot[_rbp]
+	mov qword ptr J9TR_savearea_rax[_rax],rcx
 ifdef({METHOD_INVOCATION},{
-	movq qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp],xmm0
-	movq qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp],xmm1
-	movq qword ptr J9TR_cframe_jitFPRs+(2*8)[_rsp],xmm2
-	movq qword ptr J9TR_cframe_jitFPRs+(3*8)[_rsp],xmm3
-	movq qword ptr J9TR_cframe_jitFPRs+(4*8)[_rsp],xmm4
-	movq qword ptr J9TR_cframe_jitFPRs+(5*8)[_rsp],xmm5
-	movq qword ptr J9TR_cframe_jitFPRs+(6*8)[_rsp],xmm6
-	movq qword ptr J9TR_cframe_jitFPRs+(7*8)[_rsp],xmm7
+	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
+	mov _rax,qword ptr J9TR_ELS_jitFPRegisterStorageBase[_rax]
+	movq qword ptr (0*8)[_rax],xmm0
+	movq qword ptr (1*8)[_rax],xmm1
+	movq qword ptr (2*8)[_rax],xmm2
+	movq qword ptr (3*8)[_rax],xmm3
+	movq qword ptr (4*8)[_rax],xmm4
+	movq qword ptr (5*8)[_rax],xmm5
+	movq qword ptr (6*8)[_rax],xmm6
+	movq qword ptr (7*8)[_rax],xmm7
 },{ dnl METHOD_INVOCATION
 	dnl J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS marks if we are using AVX-2 (eg YMM)
 	dnl J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS marks if we are using AVX-512 (eg ZMM)
@@ -563,22 +569,22 @@ ifdef({METHOD_INVOCATION},{
 
 	dnl save XMM registers
 	LABEL(L_xmm_save{}SYM_COUNT):
-	movdqa J9TR_cframe_jitFPRs+(0*16)[_rsp],xmm0
-	movdqa J9TR_cframe_jitFPRs+(1*16)[_rsp],xmm1
-	movdqa J9TR_cframe_jitFPRs+(2*16)[_rsp],xmm2
-	movdqa J9TR_cframe_jitFPRs+(3*16)[_rsp],xmm3
-	movdqa J9TR_cframe_jitFPRs+(4*16)[_rsp],xmm4
-	movdqa J9TR_cframe_jitFPRs+(5*16)[_rsp],xmm5
-	movdqa J9TR_cframe_jitFPRs+(6*16)[_rsp],xmm6
-	movdqa J9TR_cframe_jitFPRs+(7*16)[_rsp],xmm7
-	movdqa J9TR_cframe_jitFPRs+(8*16)[_rsp],xmm8
-	movdqa J9TR_cframe_jitFPRs+(9*16)[_rsp],xmm9
-	movdqa J9TR_cframe_jitFPRs+(10*16)[_rsp],xmm10
-	movdqa J9TR_cframe_jitFPRs+(11*16)[_rsp],xmm11
-	movdqa J9TR_cframe_jitFPRs+(12*16)[_rsp],xmm12
-	movdqa J9TR_cframe_jitFPRs+(13*16)[_rsp],xmm13
-	movdqa J9TR_cframe_jitFPRs+(14*16)[_rsp],xmm14
-	movdqa J9TR_cframe_jitFPRs+(15*16)[_rsp],xmm15
+	movdqa (0*16)[_rax],xmm0
+	movdqa (1*16)[_rax],xmm1
+	movdqa (2*16)[_rax],xmm2
+	movdqa (3*16)[_rax],xmm3
+	movdqa (4*16)[_rax],xmm4
+	movdqa (5*16)[_rax],xmm5
+	movdqa (6*16)[_rax],xmm6
+	movdqa (7*16)[_rax],xmm7
+	movdqa (8*16)[_rax],xmm8
+	movdqa (9*16)[_rax],xmm9
+	movdqa (10*16)[_rax],xmm10
+	movdqa (11*16)[_rax],xmm11
+	movdqa (12*16)[_rax],xmm12
+	movdqa (13*16)[_rax],xmm13
+	movdqa (14*16)[_rax],xmm14
+	movdqa (15*16)[_rax],xmm15
 
 	LABEL(L_save_volatile_done{}SYM_COUNT):
 	INC_SYM_COUNT()
@@ -587,14 +593,16 @@ ifdef({METHOD_INVOCATION},{
 
 define({RESTORE_C_VOLATILE_REGS},{
 ifdef({METHOD_INVOCATION},{
-	movq xmm0,qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp]
-	movq xmm1,qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp]
-	movq xmm2,qword ptr J9TR_cframe_jitFPRs+(2*8)[_rsp]
-	movq xmm3,qword ptr J9TR_cframe_jitFPRs+(3*8)[_rsp]
-	movq xmm4,qword ptr J9TR_cframe_jitFPRs+(4*8)[_rsp]
-	movq xmm5,qword ptr J9TR_cframe_jitFPRs+(5*8)[_rsp]
-	movq xmm6,qword ptr J9TR_cframe_jitFPRs+(6*8)[_rsp]
-	movq xmm7,qword ptr J9TR_cframe_jitFPRs+(7*8)[_rsp]
+	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
+	mov _rax,qword ptr J9TR_ELS_jitFPRegisterStorageBase[_rax]
+	movq xmm0,qword ptr (0*8)[_rax]
+	movq xmm1,qword ptr (1*8)[_rax]
+	movq xmm2,qword ptr (2*8)[_rax]
+	movq xmm3,qword ptr (3*8)[_rax]
+	movq xmm4,qword ptr (4*8)[_rax]
+	movq xmm5,qword ptr (5*8)[_rax]
+	movq xmm6,qword ptr (6*8)[_rax]
+	movq xmm7,qword ptr (7*8)[_rax]
 },{ dnl METHOD_INVOCATION
 
 	dnl J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS marks if we are using AVX-2 (eg YMM)
@@ -626,75 +634,87 @@ ifdef({METHOD_INVOCATION},{
 
 	dnl restore XMM registers
 	LABEL(L_xmm_restore{}SYM_COUNT):
-	movdqa xmm0,J9TR_cframe_jitFPRs+(0*16)[_rsp]
-	movdqa xmm1,J9TR_cframe_jitFPRs+(1*16)[_rsp]
-	movdqa xmm2,J9TR_cframe_jitFPRs+(2*16)[_rsp]
-	movdqa xmm3,J9TR_cframe_jitFPRs+(3*16)[_rsp]
-	movdqa xmm4,J9TR_cframe_jitFPRs+(4*16)[_rsp]
-	movdqa xmm5,J9TR_cframe_jitFPRs+(5*16)[_rsp]
-	movdqa xmm6,J9TR_cframe_jitFPRs+(6*16)[_rsp]
-	movdqa xmm7,J9TR_cframe_jitFPRs+(7*16)[_rsp]
-	movdqa xmm8,J9TR_cframe_jitFPRs+(8*16)[_rsp]
-	movdqa xmm9,J9TR_cframe_jitFPRs+(9*16)[_rsp]
-	movdqa xmm10,J9TR_cframe_jitFPRs+(10*16)[_rsp]
-	movdqa xmm11,J9TR_cframe_jitFPRs+(11*16)[_rsp]
-	movdqa xmm12,J9TR_cframe_jitFPRs+(12*16)[_rsp]
-	movdqa xmm13,J9TR_cframe_jitFPRs+(13*16)[_rsp]
-	movdqa xmm14,J9TR_cframe_jitFPRs+(14*16)[_rsp]
-	movdqa xmm15,J9TR_cframe_jitFPRs+(15*16)[_rsp]
+	movdqa xmm0,(0*16)[_rax]
+	movdqa xmm1,(1*16)[_rax]
+	movdqa xmm2,(2*16)[_rax]
+	movdqa xmm3,(3*16)[_rax]
+	movdqa xmm4,(4*16)[_rax]
+	movdqa xmm5,(5*16)[_rax]
+	movdqa xmm6,(6*16)[_rax]
+	movdqa xmm7,(7*16)[_rax]
+	movdqa xmm8,(8*16)[_rax]
+	movdqa xmm9,(9*16)[_rax]
+	movdqa xmm10,(10*16)[_rax]
+	movdqa xmm11,(11*16)[_rax]
+	movdqa xmm12,(12*16)[_rax]
+	movdqa xmm13,(13*16)[_rax]
+	movdqa xmm14,(14*16)[_rax]
+	movdqa xmm15,(15*16)[_rax]
 
 	LABEL(L_restore_volatile_done{}SYM_COUNT):
 	INC_SYM_COUNT()
 }) dnl METHOD_INVOCATION
-	mov rax,qword ptr J9TR_cframe_rax[_rsp]
-	mov rcx,qword ptr J9TR_cframe_rcx[_rsp]
-	mov rdx,qword ptr J9TR_cframe_rdx[_rsp]
-	mov rdi,qword ptr J9TR_cframe_rdi[_rsp]
-	mov rsi,qword ptr J9TR_cframe_rsi[_rsp]
-	mov r8,qword ptr J9TR_cframe_r8[_rsp]
-	mov r9,qword ptr J9TR_cframe_r9[_rsp]
-	mov r10,qword ptr J9TR_cframe_r10[_rsp]
-	mov r11,qword ptr J9TR_cframe_r11[_rsp]
+	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
+	mov _rax,qword ptr J9TR_ELS_jitGlobalStorageBase[_rax]
+	mov rcx,qword ptr J9TR_savearea_rax[_rax]
+	mov qword ptr J9TR_VMThread_tempSlot[_rbp],rcx
+	mov rcx,qword ptr J9TR_savearea_rcx[_rax]
+	mov rdx,qword ptr J9TR_savearea_rdx[_rax]
+	mov rdi,qword ptr J9TR_savearea_rdi[_rax]
+	mov rsi,qword ptr J9TR_savearea_rsi[_rax]
+	mov r8,qword ptr J9TR_savearea_r8[_rax]
+	mov r9,qword ptr J9TR_savearea_r9[_rax]
+	mov r10,qword ptr J9TR_savearea_r10[_rax]
+	mov r11,qword ptr J9TR_savearea_r11[_rax]
+	mov _rax,qword ptr J9TR_VMThread_tempSlot[_rbp]
 })
 
 define({SAVE_C_NONVOLATILE_REGS},{
-	mov qword ptr J9TR_cframe_rbx[_rsp],rbx
-	mov qword ptr J9TR_cframe_r12[_rsp],r12
-	mov qword ptr J9TR_cframe_r13[_rsp],r13
-	mov qword ptr J9TR_cframe_r14[_rsp],r14
-	mov qword ptr J9TR_cframe_r15[_rsp],r15
+	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
+	mov _rax,qword ptr J9TR_ELS_jitGlobalStorageBase[_rax]
+	mov qword ptr J9TR_savearea_rbx[_rax],rbx
+	mov qword ptr J9TR_savearea_r12[_rax],r12
+	mov qword ptr J9TR_savearea_r13[_rax],r13
+	mov qword ptr J9TR_savearea_r14[_rax],r14
+	mov qword ptr J9TR_savearea_r15[_rax],r15
 })
 
 define({RESTORE_C_NONVOLATILE_REGS},{
-	mov rbx,qword ptr J9TR_cframe_rbx[_rsp]
-	mov r12,qword ptr J9TR_cframe_r12[_rsp]
-	mov r13,qword ptr J9TR_cframe_r13[_rsp]
-	mov r14,qword ptr J9TR_cframe_r14[_rsp]
-	mov r15,qword ptr J9TR_cframe_r15[_rsp]
+	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
+	mov _rax,qword ptr J9TR_ELS_jitGlobalStorageBase[_rax]
+	mov rbx,qword ptr J9TR_savearea_rbx[_rax]
+	mov r12,qword ptr J9TR_savearea_r12[_rax]
+	mov r13,qword ptr J9TR_savearea_r13[_rax]
+	mov r14,qword ptr J9TR_savearea_r14[_rax]
+	mov r15,qword ptr J9TR_savearea_r15[_rax]
 })
 
 }) dnl WIN32
 
 define({SAVE_PRESERVED_REGS},{
-	mov qword ptr J9TR_cframe_rbx[_rsp],rbx
-	mov qword ptr J9TR_cframe_r9[_rsp],r9
-	mov qword ptr J9TR_cframe_r10[_rsp],r10
-	mov qword ptr J9TR_cframe_r11[_rsp],r11
-	mov qword ptr J9TR_cframe_r12[_rsp],r12
-	mov qword ptr J9TR_cframe_r13[_rsp],r13
-	mov qword ptr J9TR_cframe_r14[_rsp],r14
-	mov qword ptr J9TR_cframe_r15[_rsp],r15
+	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
+	mov _rax,qword ptr J9TR_ELS_jitGlobalStorageBase[_rax]
+	mov qword ptr J9TR_savearea_rbx[_rax],rbx
+	mov qword ptr J9TR_savearea_r9[_rax],r9
+	mov qword ptr J9TR_savearea_r10[_rax],r10
+	mov qword ptr J9TR_savearea_r11[_rax],r11
+	mov qword ptr J9TR_savearea_r12[_rax],r12
+	mov qword ptr J9TR_savearea_r13[_rax],r13
+	mov qword ptr J9TR_savearea_r14[_rax],r14
+	mov qword ptr J9TR_savearea_r15[_rax],r15
 })
 
 define({RESTORE_PRESERVED_REGS},{
-	mov rbx,qword ptr J9TR_cframe_rbx[_rsp]
-	mov r9,qword ptr J9TR_cframe_r9[_rsp]
-	mov r10,qword ptr J9TR_cframe_r10[_rsp]
-	mov r11,qword ptr J9TR_cframe_r11[_rsp]
-	mov r12,qword ptr J9TR_cframe_r12[_rsp]
-	mov r13,qword ptr J9TR_cframe_r13[_rsp]
-	mov r14,qword ptr J9TR_cframe_r14[_rsp]
-	mov r15,qword ptr J9TR_cframe_r15[_rsp]
+	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
+	mov _rax,qword ptr J9TR_ELS_jitGlobalStorageBase[_rax]
+	mov rbx,qword ptr J9TR_savearea_rbx[_rax]
+	mov r9,qword ptr J9TR_savearea_r9[_rax]
+	mov r10,qword ptr J9TR_savearea_r10[_rax]
+	mov r11,qword ptr J9TR_savearea_r11[_rax]
+	mov r12,qword ptr J9TR_savearea_r12[_rax]
+	mov r13,qword ptr J9TR_savearea_r13[_rax]
+	mov r14,qword ptr J9TR_savearea_r14[_rax]
+	mov r15,qword ptr J9TR_savearea_r15[_rax]
 })
 
 define({STORE_VIRTUAL_REGISTERS},{

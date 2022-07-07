@@ -402,6 +402,14 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_rsi", offsetof(J9CInterpreterStackFrame, jitGPRs.named.rsi)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_rbp", offsetof(J9CInterpreterStackFrame, jitGPRs.named.rbp)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_rsp", offsetof(J9CInterpreterStackFrame, jitGPRs.named.rsp)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_rax", offsetof(J9CInterpreterStackFrame, jitGPRs.named.rax) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_rbx", offsetof(J9CInterpreterStackFrame, jitGPRs.named.rbx) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_rcx", offsetof(J9CInterpreterStackFrame, jitGPRs.named.rcx) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_rdx", offsetof(J9CInterpreterStackFrame, jitGPRs.named.rdx) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_rdi", offsetof(J9CInterpreterStackFrame, jitGPRs.named.rdi) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_rsi", offsetof(J9CInterpreterStackFrame, jitGPRs.named.rsi) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_rbp", offsetof(J9CInterpreterStackFrame, jitGPRs.named.rbp) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_rsp", offsetof(J9CInterpreterStackFrame, jitGPRs.named.rsp) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
 #if defined(J9VM_ENV_DATA64)
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_r8", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r8)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_r9", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r9)) |
@@ -411,6 +419,14 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_r13", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r13)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_r14", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r14)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_r15", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r15)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_r8", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r8) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_r9", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r9) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_r10", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r10) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_r11", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r11) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_r12", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r12) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_r13", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r13) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_r14", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r14) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_savearea_r15", offsetof(J9CInterpreterStackFrame, jitGPRs.named.r15) - offsetof(J9CInterpreterStackFrame, jitGPRs)) |
 #if defined(WIN32)
 			/* Windows x86-64 */
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_preservedFPRs", offsetof(J9CInterpreterStackFrame, preservedFPRs)) |
