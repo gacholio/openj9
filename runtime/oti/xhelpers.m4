@@ -515,7 +515,7 @@ define({RESTORE_C_NONVOLATILE_REGS},{
 },{ dnl WIN32
 
 define({SAVE_C_VOLATILE_REGS},{
-	mov qword ptr J9TR_VMThread_tempSlot[_rbp],rax
+	mov qword ptr J9TR_VMThread_debugEventData1[_rbp],rax
 	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
 	mov _rax,qword ptr J9TR_ELS_jitGlobalStorageBase[_rax]
 	mov qword ptr J9TR_savearea_rcx[_rax],rcx
@@ -526,11 +526,11 @@ define({SAVE_C_VOLATILE_REGS},{
 	mov qword ptr J9TR_savearea_r9[_rax],r9
 	mov qword ptr J9TR_savearea_r10[_rax],r10
 	mov qword ptr J9TR_savearea_r11[_rax],r11
-	mov _rcx,qword ptr J9TR_VMThread_tempSlot[_rbp]
+	mov _rcx,qword ptr J9TR_VMThread_debugEventData1[_rbp]
 	mov qword ptr J9TR_savearea_rax[_rax],rcx
-ifdef({METHOD_INVOCATION},{
 	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
 	mov _rax,qword ptr J9TR_ELS_jitFPRegisterStorageBase[_rax]
+ifdef({METHOD_INVOCATION},{
 	movq qword ptr (0*8)[_rax],xmm0
 	movq qword ptr (1*8)[_rax],xmm1
 	movq qword ptr (2*8)[_rax],xmm2
@@ -592,9 +592,9 @@ ifdef({METHOD_INVOCATION},{
 })
 
 define({RESTORE_C_VOLATILE_REGS},{
-ifdef({METHOD_INVOCATION},{
 	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
 	mov _rax,qword ptr J9TR_ELS_jitFPRegisterStorageBase[_rax]
+ifdef({METHOD_INVOCATION},{
 	movq xmm0,qword ptr (0*8)[_rax]
 	movq xmm1,qword ptr (1*8)[_rax]
 	movq xmm2,qword ptr (2*8)[_rax]
@@ -656,8 +656,6 @@ ifdef({METHOD_INVOCATION},{
 }) dnl METHOD_INVOCATION
 	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
 	mov _rax,qword ptr J9TR_ELS_jitGlobalStorageBase[_rax]
-	mov rcx,qword ptr J9TR_savearea_rax[_rax]
-	mov qword ptr J9TR_VMThread_tempSlot[_rbp],rcx
 	mov rcx,qword ptr J9TR_savearea_rcx[_rax]
 	mov rdx,qword ptr J9TR_savearea_rdx[_rax]
 	mov rdi,qword ptr J9TR_savearea_rdi[_rax]
@@ -666,7 +664,7 @@ ifdef({METHOD_INVOCATION},{
 	mov r9,qword ptr J9TR_savearea_r9[_rax]
 	mov r10,qword ptr J9TR_savearea_r10[_rax]
 	mov r11,qword ptr J9TR_savearea_r11[_rax]
-	mov _rax,qword ptr J9TR_VMThread_tempSlot[_rbp]
+	mov rax,qword ptr J9TR_savearea_rax[_rax]
 })
 
 define({SAVE_C_NONVOLATILE_REGS},{
@@ -680,13 +678,13 @@ define({SAVE_C_NONVOLATILE_REGS},{
 })
 
 define({RESTORE_C_NONVOLATILE_REGS},{
-	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
-	mov _rax,qword ptr J9TR_ELS_jitGlobalStorageBase[_rax]
-	mov rbx,qword ptr J9TR_savearea_rbx[_rax]
-	mov r12,qword ptr J9TR_savearea_r12[_rax]
-	mov r13,qword ptr J9TR_savearea_r13[_rax]
-	mov r14,qword ptr J9TR_savearea_r14[_rax]
-	mov r15,qword ptr J9TR_savearea_r15[_rax]
+	mov r15,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
+	mov r15,qword ptr J9TR_ELS_jitGlobalStorageBase[r15]
+	mov rbx,qword ptr J9TR_savearea_rbx[r15]
+	mov r12,qword ptr J9TR_savearea_r12[r15]
+	mov r13,qword ptr J9TR_savearea_r13[r15]
+	mov r14,qword ptr J9TR_savearea_r14[r15]
+	mov r15,qword ptr J9TR_savearea_r15[r15]
 })
 
 }) dnl WIN32
@@ -705,16 +703,16 @@ define({SAVE_PRESERVED_REGS},{
 })
 
 define({RESTORE_PRESERVED_REGS},{
-	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
-	mov _rax,qword ptr J9TR_ELS_jitGlobalStorageBase[_rax]
-	mov rbx,qword ptr J9TR_savearea_rbx[_rax]
-	mov r9,qword ptr J9TR_savearea_r9[_rax]
-	mov r10,qword ptr J9TR_savearea_r10[_rax]
-	mov r11,qword ptr J9TR_savearea_r11[_rax]
-	mov r12,qword ptr J9TR_savearea_r12[_rax]
-	mov r13,qword ptr J9TR_savearea_r13[_rax]
-	mov r14,qword ptr J9TR_savearea_r14[_rax]
-	mov r15,qword ptr J9TR_savearea_r15[_rax]
+	mov r15,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
+	mov r15,qword ptr J9TR_ELS_jitGlobalStorageBase[r15]
+	mov rbx,qword ptr J9TR_savearea_rbx[r15]
+	mov r9,qword ptr J9TR_savearea_r9[r15]
+	mov r10,qword ptr J9TR_savearea_r10[r15]
+	mov r11,qword ptr J9TR_savearea_r11[r15]
+	mov r12,qword ptr J9TR_savearea_r12[r15]
+	mov r13,qword ptr J9TR_savearea_r13[r15]
+	mov r14,qword ptr J9TR_savearea_r14[r15]
+	mov r15,qword ptr J9TR_savearea_r15[r15]
 })
 
 define({STORE_VIRTUAL_REGISTERS},{
