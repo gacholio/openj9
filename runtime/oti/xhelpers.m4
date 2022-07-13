@@ -668,13 +668,13 @@ ifdef({METHOD_INVOCATION},{
 })
 
 define({SAVE_C_NONVOLATILE_REGS},{
-	mov _rax,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
-	mov _rax,qword ptr J9TR_ELS_jitGlobalStorageBase[_rax]
-	mov qword ptr J9TR_savearea_rbx[_rax],rbx
-	mov qword ptr J9TR_savearea_r12[_rax],r12
-	mov qword ptr J9TR_savearea_r13[_rax],r13
-	mov qword ptr J9TR_savearea_r14[_rax],r14
-	mov qword ptr J9TR_savearea_r15[_rax],r15
+	mov rsi,qword ptr J9TR_VMThread_entryLocalStorage[_rbp]
+	mov rsi,qword ptr J9TR_ELS_jitGlobalStorageBase[rsi]
+	mov qword ptr J9TR_savearea_rbx[rsi],rbx
+	mov qword ptr J9TR_savearea_r12[rsi],r12
+	mov qword ptr J9TR_savearea_r13[rsi],r13
+	mov qword ptr J9TR_savearea_r14[rsi],r14
+	mov qword ptr J9TR_savearea_r15[rsi],r15
 })
 
 define({RESTORE_C_NONVOLATILE_REGS},{
