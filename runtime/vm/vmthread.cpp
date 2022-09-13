@@ -109,7 +109,7 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 
 	/* Allocate the stack */
 
-	if ((stack = allocateJavaStack(vm, VMTHR_INITIAL_STACK_SIZE, NULL)) == NULL) {
+	if ((stack = allocateJavaStack(vm, VMTHR_INITIAL_STACK_SIZE, NULL, FALSE)) == NULL) {
 		goto fail;
 	}
 
@@ -1405,43 +1405,56 @@ dumpThreadingInfo(J9JavaVM* jvm)
 
 
 J9JavaStack * 
-allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
+allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack, BOOLEAN unmountedContinuation)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	J9JavaStack * stack;
-	UDATA mallocSize;
+	J9JavaStack * stack = NULL;
+	UDATA mallocSize = 0;
+	UDATA thrStaggerMax = unmountedContinuation ? 0 : vm->thrStaggerMax;
 
 	/* Allocate the stack, adding the header and overflow area size.
 	 * Add one slot for possible double-slot alignment.
 	 * If stagger is in use, add the maximum stagger value to account for that alignment.
 	 */
 
-	mallocSize = J9_STACK_OVERFLOW_AND_HEADER_SIZE + (stackSize + sizeof(UDATA)) + vm->thrStaggerMax;
+	mallocSize = J9_STACK_OVERFLOW_AND_HEADER_SIZE + (stackSize + sizeof(UDATA)) + thrStaggerMax;
 	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-		stack = (J9JavaStack*)j9mem_allocate_memory32(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+		if (unmountedContinuation) {
+			/* Compressed refs so UDATA is 64 bits (8 bytes) */
+			UDATA stackSlots = (stackSize + sizeof(UDATA)) / 8;
+			UDATA mapSlots = (stackSlots + 63) / 64;
+			mallocSize += (mapSlots * 8);
+			stack = (J9JavaStack*)j9mem_allocate_memory(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+			memset(stack, 0, mallocSize);
+		} else {
+			stack = (J9JavaStack*)j9mem_allocate_memory32(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+		}
 	} else {
+		Assert_VM_false(unmountedContinuation);
 		stack = (J9JavaStack*)j9mem_allocate_memory(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
 	}
 	if (stack != NULL) {
 		/* for hyperthreading platforms, make sure that stacks are relatively misaligned */
 		UDATA end = ((UDATA) stack) + J9_STACK_OVERFLOW_AND_HEADER_SIZE + stackSize;
-		UDATA stagger = vm->thrStagger;
-		stagger += vm->thrStaggerStep;
-		vm->thrStagger = stagger = stagger >= vm->thrStaggerMax ? 0 : stagger;
-		if (vm->thrStaggerMax != 0) {
-			end += vm->thrStaggerMax - ((UDATA)end + stagger) % vm->thrStaggerMax;
+		if (!unmountedContinuation) {
+			UDATA stagger = vm->thrStagger;
+			stagger += vm->thrStaggerStep;
+			vm->thrStagger = stagger = stagger >= vm->thrStaggerMax ? 0 : stagger;
+			if (vm->thrStaggerMax != 0) {
+				end += vm->thrStaggerMax - ((UDATA)end + stagger) % vm->thrStaggerMax;
+			}
+#if 0
+			j9tty_printf(PORTLIB, "Allocated stack ending at 16r%p (stagger = %d, alignment = %d)\n", 
+				end, 
+				stagger, 
+				vm->thrStaggerMax ? end % vm->thrStaggerMax : 0);
+#endif
 		}
+
 		/* Ensure that the stack ends on a double-slot boundary */
 		if (J9_ARE_ANY_BITS_SET(end, sizeof(UDATA))) {
 			end += sizeof(UDATA);
 		}
-#if 0
-		j9tty_printf(PORTLIB, "Allocated stack ending at 16r%p (stagger = %d, alignment = %d)\n", 
-			end, 
-			stagger, 
-			vm->thrStaggerMax ? end % vm->thrStaggerMax : 0);
-#endif
-
 		stack->end = (UDATA*)end;
 		stack->size = stackSize;
 		stack->previous = previousStack;

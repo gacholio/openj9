@@ -57,7 +57,7 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 #define VMTHR_INITIAL_STACK_SIZE vm->stackSize
 #endif
 
-	if ((stack = allocateJavaStack(vm, VMTHR_INITIAL_STACK_SIZE, NULL)) == NULL) {
+	if ((stack = allocateJavaStack(vm, VMTHR_INITIAL_STACK_SIZE, NULL, FALSE)) == NULL) {
 		vm->internalVMFunctions->setNativeOutOfMemoryError(currentThread, 0, 0);
 		result = FALSE;
 		goto end;

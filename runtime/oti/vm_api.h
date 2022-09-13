@@ -4148,10 +4148,11 @@ threadAboutToStart(J9VMThread *currentThread);
 * @param vm
 * @param stackSize
 * @param previousStack
+* @param unmountedContinuation
 * @return J9JavaStack *
 */
 J9JavaStack *
-allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack);
+allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack, BOOLEAN unmountedContinuation);
 
 
 /**

@@ -1650,7 +1650,22 @@ stackAllocatedObjectSlotWalkFunction(J9JavaVM *javaVM, J9MM_IterateObjectDescrip
 	swMarkSlotAsObject(walkState, (j9object_t*)(((UDATA)refDesc->fieldAddress) & ~(UDATA)(sizeof(UDATA) - 1)));
 #endif /* J9VM_INTERP_STACKWALK_TRACING */
 
-	walkState->objectSlotWalkFunction(walkState->currentThread, walkState, &refDesc->object, refDesc->fieldAddress);
+	if (J9_ARE_ANY_BITS_SET(walkState->flags, J9_STACKWALK_SA_DELTA)) {
+		/* Compressed refs so UDATA is 64 bits (8 bytes) */
+		UDATA slotNumber = (UDATA)*refDesc->fieldAddress;
+		J9JavaStack *stack = walkState->walkThread->stackObject;
+		U_64 *stackEnd = (U_64*)stack->end;
+		UDATA mapSlot = slotNumber / 64;
+		U_64 mapBit = 1 << (slotNumber % 64);
+		if (J9_ARE_ANY_BITS_SET(stackEnd[mapSlot], mapBit)) {
+			j9object_t object = (j9object_t)(stackEnd - slotNumber);
+			walkState->objectSlotWalkFunction(walkState->currentThread, walkState, &object, refDesc->fieldAddress);			
+		} else {
+			walkState->objectSlotWalkFunction(walkState->currentThread, walkState, &refDesc->object, refDesc->fieldAddress);			
+		}
+	} else {
+		walkState->objectSlotWalkFunction(walkState->currentThread, walkState, &refDesc->object, refDesc->fieldAddress);
+	}
 
 #if defined (J9VM_INTERP_STACKWALK_TRACING)
 	if (oldValue != refDesc->object) {
