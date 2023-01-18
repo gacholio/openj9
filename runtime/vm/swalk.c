@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,6 +178,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	walkState->stackMap = NULL;
 	walkState->inlineMap = NULL;
 	walkState->inlinedCallSite = NULL;
+	walkState->slotRC = J9_STACKWALK_KEEP_ITERATING;
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	walkState->jitInfo = NULL;
 	walkState->inlineDepth = 0;
@@ -306,6 +307,11 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 		lswFrameNew(walkState->walkThread->javaVM, walkState, (UDATA)walkState->pc);
 #endif	
+
+		if (J9_STACKWALK_KEEP_ITERATING != walkState->slotRC) {
+			rc = walkState->slotRC;
+			goto terminationPoint;
+		}
 
 		switch((UDATA) walkState->pc) {
 			case J9SF_FRAME_TYPE_END_OF_STACK:
@@ -1296,7 +1302,7 @@ swWalkObjectSlot(J9StackWalkState * walkState, j9object_t * objectSlot, void * i
 		lswRecordSlot(walkState, objectSlot, LSW_TYPE_O_SLOT, tag ? tag : "O-Slot");
 #endif  
 	}
-	walkState->objectSlotWalkFunction(walkState->currentThread, walkState, objectSlot, objectSlot);
+	if (J9_STACKWALK_KEEP_ITERATING == walkState->slotRC) walkState->objectSlotWalkFunction(walkState->currentThread, walkState, objectSlot, objectSlot);
 	newValue = *((UDATA *) objectSlot);
 	if (oldValue != newValue) {
 		swPrintf(walkState, 4, "\t\t\t-> %p\n", newValue);

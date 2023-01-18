@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2541,7 +2541,8 @@ typedef struct J9StackWalkState {
 	/* The size of J9StackWalkState must be a multiple of 8 because it is inlined into
 	 * J9VMThread where alignment assumotions are being made.
 	 */
-#if 1 && !defined(J9VM_ENV_DATA64) /* Change to 0 or 1 based on number of fields above */
+	UDATA slotRC;
+#if 0 && !defined(J9VM_ENV_DATA64) /* Change to 0 or 1 based on number of fields above */
 	U_32 padTo8;
 #endif /* !J9VM_ENV_DATA64 */
 } J9StackWalkState;

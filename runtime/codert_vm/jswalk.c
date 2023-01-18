@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -171,7 +171,11 @@ UDATA  jitWalkStackFrames(J9StackWalkState *walkState)
 		walkState->stackMap = NULL;
 		walkState->inlineMap = NULL;
 		walkState->bp = walkState->unwindSP + getJitTotalFrameSize(walkState->jitInfo);
-		
+
+		if (J9_STACKWALK_KEEP_ITERATING != walkState->slotRC) {
+			return walkState->slotRC;
+		}
+
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 		lswRecord(walkState, LSW_TYPE_JIT_BP, walkState->bp);
 #endif
@@ -730,7 +734,7 @@ static void jitWalkRegisterMap(J9StackWalkState *walkState, void *stackMap, J9JI
 				j9object_t newObject;
 				swPrintf(walkState, 4, "\t\tJIT-RegisterMap-O-Slot[%p] = %p (%s)\n", targetObject, oldObject, jitRegisterNames[mapCursor - ((UDATA **) &(walkState->registerEAs))]);
 #endif
-				walkState->objectSlotWalkFunction(walkState->walkThread, walkState, targetObject, targetObject);
+				if (J9_STACKWALK_KEEP_ITERATING == walkState->slotRC) walkState->objectSlotWalkFunction(walkState->walkThread, walkState, targetObject, targetObject);
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 				newObject = *targetObject;
 				if (oldObject != newObject) {
@@ -1650,7 +1654,7 @@ stackAllocatedObjectSlotWalkFunction(J9JavaVM *javaVM, J9MM_IterateObjectDescrip
 	swMarkSlotAsObject(walkState, (j9object_t*)(((UDATA)refDesc->fieldAddress) & ~(UDATA)(sizeof(UDATA) - 1)));
 #endif /* J9VM_INTERP_STACKWALK_TRACING */
 
-	walkState->objectSlotWalkFunction(walkState->currentThread, walkState, &refDesc->object, refDesc->fieldAddress);
+	if (J9_STACKWALK_KEEP_ITERATING == walkState->slotRC) walkState->objectSlotWalkFunction(walkState->currentThread, walkState, &refDesc->object, refDesc->fieldAddress);
 
 #if defined (J9VM_INTERP_STACKWALK_TRACING)
 	if (oldValue != refDesc->object) {

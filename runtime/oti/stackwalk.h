@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,7 @@ extern "C" {
 #define WALK_NAMED_INDIRECT_O_SLOT(slot, ind, tag) swWalkObjectSlot(walkState, (slot), (ind), (tag))
 #define WALK_NAMED_INDIRECT_I_SLOT(slot, ind, tag) swWalkIntSlot(walkState, (slot), (ind), (tag))
 #else
-#define WALK_NAMED_INDIRECT_O_SLOT(slot, ind, tag) walkState->objectSlotWalkFunction(walkState->currentThread, walkState, (slot), (slot))
+#define WALK_NAMED_INDIRECT_O_SLOT(slot, ind, tag) if (J9_STACKWALK_KEEP_ITERATING == walkState->slotRC) walkState->objectSlotWalkFunction(walkState->currentThread, walkState, (slot), (slot))
 #define WALK_NAMED_INDIRECT_I_SLOT(slot, ind, tag)
 #endif
 #define WALK_INDIRECT_O_SLOT(slot, ind) WALK_NAMED_INDIRECT_O_SLOT((slot), (ind), NULL)

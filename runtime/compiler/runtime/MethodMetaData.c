@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1408,7 +1408,7 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
       swPrintf(walkState, 6, "Before object slot walk &address : %p address : %p bp %p offset of first internal ptr %d\n", currPinningArrayCursor, oldPinningArrayAddress, walkState->bp, offsetOfFirstInternalPtr);
 #endif
-      walkState->objectSlotWalkFunction(walkState->walkThread, walkState, currPinningArrayCursor, currPinningArrayCursor);
+      if (J9_STACKWALK_KEEP_ITERATING == walkState->slotRC) { walkState->objectSlotWalkFunction(walkState->walkThread, walkState, currPinningArrayCursor, currPinningArrayCursor); }
       newPinningArrayAddress = *((J9Object **) currPinningArrayCursor);
       displacement = (IDATA) (((UDATA)newPinningArrayAddress) - ((UDATA)oldPinningArrayAddress));
       ++(walkState->slotIndex);
