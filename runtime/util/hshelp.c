@@ -3523,6 +3523,10 @@ verifyClassesCanBeReplaced(J9VMThread * currentThread, jint class_count, const j
 		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
 
 		if (!classIsModifiable(currentThread->javaVM, clazz)) {
+			PORT_ACCESS_FROM_VMC(currentThread);
+			J9ROMClass *romClass = clazz->romClass;
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+			j9tty_printf(PORTLIB, "\n*** verify - unmodifiable: %.*s ***\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 			return JVMTI_ERROR_UNMODIFIABLE_CLASS;
 		}
 
