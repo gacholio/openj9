@@ -33,7 +33,7 @@ public class rc014 {
 	public boolean setup(String args) {
 		return true;
 	}
-	
+
 	//****************************************************************************************
 	// 
 	// Validate that we don't allow the finalize method in java.lang.Object to be transformed to
@@ -44,8 +44,14 @@ public class rc014 {
 	public boolean testModifyJavaLangObjectFinalizer() {
 		try {
 			
-System.out.println("Redefining object");
-			boolean redefined = Util.redefineClass(getClass(), Object.class, Object.class);
+			// get the bytes for the current Object implementation
+			// in order to update the test create a new version of java.lang.Object and point this line so it reads that new
+			// version and uncomment the lines which output the class bytes, once you have the output with the updated
+			// bytes update the newClassBytesString and then point it back to the original
+			byte classBytes[] = Util.getClassBytesFromUrl(Object.class,new URL("file:/" + System.getProperty("java.home") + "/jre/lib/amd64/compressedrefs/jclSC180/vm.jar"));
+
+			System.out.println("Redefining Object");
+			boolean redefined = redefineClass(Object.class, classBytes.length, classBytes);
 			if (!redefined) {
 				return false;
 			}
