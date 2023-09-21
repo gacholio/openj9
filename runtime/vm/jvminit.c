@@ -4064,6 +4064,8 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+	vm->runtimeFlags |= J9_RUNTIME_DYNAMIC_HEAPIFICATION;
+
 #if JAVA_SPEC_VERSION >= 19
 	{
 		IDATA showCarrierFrames = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSHOWCARRIERFRAMES, NULL);
