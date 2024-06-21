@@ -1143,17 +1143,20 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
  * Disable AVX+ vector register preservation on x86 due to a large performance regression.
  * Issue: #15716
  */
-#if defined(J9HAMMER) && (JAVA_SPEC_VERSION >= 17) && 0
+#if defined(J9HAMMER)
 	J9ProcessorDesc desc;
 	j9sysinfo_get_processor_description(&desc);
 
 	if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_AVX512F) && j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_AVX512BW)) {
 		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
 		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS;
+		j9tty_printf(PORTLIB, "\n!!! AVX512F AVX512BW\n");
 	} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_AVX512F)) {
 		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS;
+		j9tty_printf(PORTLIB, "\n!!! AVX512F\n");
 	} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_AVX)) {
 		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
+		j9tty_printf(PORTLIB, "\n!!! AVX\n");
 	}
 #endif /* defined(J9HAMMER) && (JAVA_SPEC_VERSION >= 17) && 0 */
 
