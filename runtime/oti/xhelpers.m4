@@ -386,8 +386,8 @@ ifdef({METHOD_INVOCATION},{
 	movq qword ptr J9TR_cframe_jitFPRs+(5*8)[_rsp],xmm5
 },{ dnl METHOD_INVOCATION
 	mov r8,J9TR_VMThread_javaVM[J9VMTHREAD]
-	mov eax,J9TR_JavaVM_extendedRuntimeFlags[r8]
-	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS + J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	mov r8d,J9TR_JavaVM_extendedRuntimeFlags[r8]
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS + J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
 	jz LABEL(L_xmm_save{}SYM_COUNT)
 	dnl save YMM/ZMM registers
 	call GLOBAL_SYMBOL(jitSaveVectorRegisters)
@@ -420,8 +420,8 @@ ifdef({METHOD_INVOCATION},{
 	dnl J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS marks if we are using AVX-512 (eg ZMM)
 	dnl No flags means normal SSE registers (XMM)
 	mov r8,J9TR_VMThread_javaVM[J9VMTHREAD]
-	mov eax,J9TR_JavaVM_extendedRuntimeFlags[r8]
-	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS + J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	mov r8d,J9TR_JavaVM_extendedRuntimeFlags[r8]
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS + J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
 	jz LABEL(L_xmm_restore{}SYM_COUNT)
 	dnl restore YMM/ZMM registers
 	call GLOBAL_SYMBOL(jitRestoreVectorRegisters)
@@ -508,8 +508,8 @@ ifdef({METHOD_INVOCATION},{
 	dnl J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS marks if we are using AVX-512 (eg ZMM)
 	dnl No flags means normal SSE registers (XMM)
 	mov r8,J9TR_VMThread_javaVM[J9VMTHREAD]
-	mov eax,J9TR_JavaVM_extendedRuntimeFlags[r8]
-	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS + J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	mov r8d,J9TR_JavaVM_extendedRuntimeFlags[r8]
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS + J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
 	jz LABEL(L_xmm_save{}SYM_COUNT)
 	dnl save YMM/ZMM registers
 	call GLOBAL_SYMBOL(jitSaveVectorRegisters)
@@ -555,8 +555,8 @@ ifdef({METHOD_INVOCATION},{
 	dnl J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS marks if we are using AVX-512 (eg ZMM)
 	dnl No flags means normal SSE registers (XMM)
 	mov r8,J9TR_VMThread_javaVM[J9VMTHREAD]
-	mov eax,J9TR_JavaVM_extendedRuntimeFlags[r8]
-	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS + J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	mov r8d,J9TR_JavaVM_extendedRuntimeFlags[r8]
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS + J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
 	jz LABEL(L_xmm_restore{}SYM_COUNT)
 	dnl restore YMM/ZMM registers
 	call GLOBAL_SYMBOL(jitRestoreVectorRegisters)

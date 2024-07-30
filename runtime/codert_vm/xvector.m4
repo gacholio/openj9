@@ -33,7 +33,7 @@ dnl On exit, _rcx is overwritten
 START_PROC(jitSaveVectorRegisters)
 	pop _rcx
 
-	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
 	jnz LABEL(L_zmm_save)
 
 	dnl save YMM registers
@@ -43,7 +43,7 @@ START_PROC(jitSaveVectorRegisters)
 	dnl save ZMM registers
 	LABEL(L_zmm_save):
 	forloop({REG_CTR}, 0, 5, {SAVE_ZMM_REG(REG_CTR, J9TR_cframe_jitFPRs+(REG_CTR*64))})
-	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
 	jnz LABEL(L_avx_512bw_save)
 
 	forloop({REG_CTR}, 0, 7, {SAVE_MASK_16(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*2))})
@@ -60,7 +60,7 @@ END_PROC(jitSaveVectorRegisters)
 START_PROC(jitRestoreVectorRegisters)
 	pop _rcx
 
-	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
 	jnz LABEL(L_zmm_restore)
 
 	dnl restore YMM registers
@@ -70,7 +70,7 @@ START_PROC(jitRestoreVectorRegisters)
 	dnl restore ZMM registers
 	LABEL(L_zmm_restore):
 	forloop({REG_CTR}, 0, 5, {RESTORE_ZMM_REG(REG_CTR, J9TR_cframe_jitFPRs+(REG_CTR*64))})
-	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	test r8d,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
 	jnz LABEL(L_avx_512bw_restore)
 
 	forloop({REG_CTR}, 0, 7, {RESTORE_MASK_16(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*2))})
