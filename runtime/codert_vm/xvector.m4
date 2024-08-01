@@ -31,7 +31,7 @@ dnl
 dnl On exit, _rcx is overwritten
 
 START_PROC(jitSaveVectorRegisters)
-	pop _rcx
+	pop uword ptr J9TR_VMThread_floatTemp3[_rbp]
 
 	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
 	jnz LABEL(L_zmm_save)
@@ -53,12 +53,12 @@ START_PROC(jitSaveVectorRegisters)
 	forloop({REG_CTR}, 0, 7, {SAVE_MASK_64(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*8))})
 
 	LABEL(L_save_vector_done):
-	push _rcx
+	push uword ptr J9TR_VMThread_floatTemp3[_rbp]
 	ret
 END_PROC(jitSaveVectorRegisters)
 
 START_PROC(jitRestoreVectorRegisters)
-	pop _rcx
+	pop uword ptr J9TR_VMThread_floatTemp3[_rbp]
 
 	test eax,J9TR_J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS
 	jnz LABEL(L_zmm_restore)
@@ -80,7 +80,7 @@ START_PROC(jitRestoreVectorRegisters)
 	forloop({REG_CTR}, 0, 7, {RESTORE_MASK_64(REG_CTR, J9TR_cframe_maskRegisters+(REG_CTR*8))})
 
 	LABEL(L_restore_volatile_done):
-	push _rcx
+	push uword ptr J9TR_VMThread_floatTemp3[_rbp]
 	ret
 END_PROC(jitRestoreVectorRegisters)
 	
