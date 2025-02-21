@@ -4330,6 +4330,7 @@ typedef struct J9JITConfig {
 	UDATA osrStackFrameMaximumSize;
 	void* jitFillOSRBufferReturn;
 	IDATA  ( *launchGPU)(struct J9VMThread *vmThread, jobject invokeObject, J9Method *method, int deviceId, I_32 gridDimX, I_32 gridDimY, I_32 gridDimZ, I_32 blockDimX, I_32 blockDimY, I_32 blockDimZ, void **args) ;
+	void* jitExitInterpreter0RestoreAll;
 	void* jitExitInterpreter0;
 	void* jitExitInterpreter1;
 	void* jitExitInterpreterF;
