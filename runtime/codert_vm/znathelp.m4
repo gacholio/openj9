@@ -524,6 +524,10 @@ PLACE_LABEL(L_CINTERP)
     br r14
 END_CURRENT
 
+BEGIN_RETURN_POINT(jitExitInterpreter0RestoreAll)
+	RESTORE_ALL_REGS
+END_RETURN_POINT(jitExitInterpreter0RestoreAll)
+
 BEGIN_RETURN_POINT(jitExitInterpreter0)
 END_RETURN_POINT
 

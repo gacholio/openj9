@@ -446,6 +446,10 @@ START_PROC(cInterpreterFromJIT)
 	br x0
 END_PROC(cInterpreterFromJIT)
 
+BEGIN_RETURN_POINT(jitExitInterpreter0RestoreAll)
+	RESTORE_ALL_REGS
+END_RETURN_POINT(jitExitInterpreter0RestoreAll)
+
 BEGIN_RETURN_POINT(jitExitInterpreter0)
 END_RETURN_POINT(jitExitInterpreter0)
 

@@ -597,6 +597,13 @@ BEGIN_HELPER(jitTranslateNewInstanceMethod)
 	jmp uword ptr J9TR_VMThread_tempSlot[_rbp]
 END_HELPER(jitTranslateNewInstanceMethod,0)
 
+BEGIN_RETURN_POINT(jitExitInterpreter0RestoreAll)
+dnl java stack is active on entry
+	SWITCH_TO_C_STACK
+	RESTORE_ALL_REGS
+	SWITCH_TO_JAVA_STACK
+END_RETURN_POINT(jitExitInterpreter0RestoreAll)
+
 BEGIN_RETURN_POINT(jitExitInterpreter0)
 END_RETURN_POINT(jitExitInterpreter0)
 
