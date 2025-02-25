@@ -5544,6 +5544,7 @@ ffi_OOM:
 		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 		}
+		// TODO: similar code to yield for resumeAction
 		return rc;
 	}
 
@@ -5563,10 +5564,17 @@ ffi_OOM:
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
 
-		/* its going to return as if it were returning from continuation.enterImpl()
-		 * so we need to push the boolean return val
-		 */
-		returnSingleFromINL(REGISTER_ARGS, JNI_FALSE, 1);
+		switch(_currentThread->currentContinuation->resumeAction) {
+		case J9CONTINUATION_RESUME_LOAD_ALL_REGS_RUN_JIT:
+			// TODO: collapse resolve frame, refetching return address
+			rc = promotedMethodOnTransitionFromJIT(REGISTER_ARGS, (void*)returnAddress, _vm->jitConfig->jitExitInterpreter0RestoreAll);
+			break;
+		default:
+			/* its going to return as if it were returning from continuation.enterImpl()
+			 * so we need to push the boolean return val
+			 */
+			returnSingleFromINL(REGISTER_ARGS, JNI_FALSE, 1);
+		}
 		return rc;
 
 	}
@@ -10514,6 +10522,7 @@ public:
 #endif /* JAVA_SPEC_VERSION >= 16 */
 	case J9_BCLOOP_YIELD_FOR_JIT_MONENT:
 		vmThread->currentContinuation->resumeAction = J9CONTINUATION_RESUME_LOAD_ALL_REGS_RUN_JIT;
+		// yield somehow
 		break;
 	case J9_BCLOOP_YIELD_FOR_JIT_SYNC_METHOD_ENTER:
 		break;
