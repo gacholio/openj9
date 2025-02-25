@@ -5410,6 +5410,7 @@ typedef struct J9VMContinuation {
 	struct J9I2JState i2jState;
 	struct J9VMEntryLocalStorage* oldEntryLocalStorage;
 	UDATA dropFlags;
+	UDATA resumeAction;
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 

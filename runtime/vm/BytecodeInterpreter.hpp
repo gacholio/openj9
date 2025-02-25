@@ -10512,6 +10512,11 @@ public:
 	case J9_BCLOOP_N2I_TRANSITION:
 		PERFORM_ACTION(native2InterpreterTransition(REGISTER_ARGS));
 #endif /* JAVA_SPEC_VERSION >= 16 */
+	case J9_BCLOOP_YIELD_FOR_JIT_MONENT:
+		vmThread->currentContinuation->resumeAction = J9CONTINUATION_RESUME_LOAD_ALL_REGS_RUN_JIT;
+		break;
+	case J9_BCLOOP_YIELD_FOR_JIT_SYNC_METHOD_ENTER:
+		break;
 	default:
 #if defined(TRACE_TRANSITIONS)
 		j9tty_printf(PORTLIB, "<%p> enter: UNKNOWN %d\n", vmThread, vmThread->returnValue);

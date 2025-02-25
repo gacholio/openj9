@@ -44,8 +44,10 @@ old_slow_jitThrowNullPointerException(J9VMThread *currentThread);
 
 J9_EXTERN_BUILDER_SYMBOL(throwCurrentExceptionFromJIT);
 J9_EXTERN_BUILDER_SYMBOL(handlePopFramesFromJIT);
+J9_EXTERN_BUILDER_SYMBOL(yieldAtMonitorEnter);
 #define J9_JITHELPER_ACTION_THROW		J9_BUILDER_SYMBOL(throwCurrentExceptionFromJIT)
 #define J9_JITHELPER_ACTION_POP_FRAMES	J9_BUILDER_SYMBOL(handlePopFramesFromJIT)
+#define J9_JITHELPER_ACTION_YIELD_AT_MONENT	J9_BUILDER_SYMBOL(yieldAtMonitorEnter)
 
 J9_EXTERN_BUILDER_SYMBOL(jitRunOnJavaStack);
 #define JIT_RUN_ON_JAVA_STACK(x) (currentThread->tempSlot = (UDATA)(x), J9_BUILDER_SYMBOL(jitRunOnJavaStack))
@@ -1748,6 +1750,11 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 		case J9_OBJECT_MONITOR_OOM:
 			addr = setNativeOutOfMemoryErrorFromJIT(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
 			break;
+		/*
+		 case VTHREAD_MON:
+		 	addr = J9_JITHELPER_ACTION_YIELD_AT_MONENT;
+		 	break;
+		 */
 		default:
 			Assert_CodertVM_unreachable();
 		}
