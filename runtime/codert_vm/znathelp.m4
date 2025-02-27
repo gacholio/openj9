@@ -854,6 +854,10 @@ BEGIN_FUNC(throwCurrentExceptionFromJIT)
     CINTERP(J9TR_bcloop_throw_current_exception, 0)
 END_CURRENT
 
+START_PROC(yieldAtMonitorEnter)
+	CINTERP(J9TR_bcloop_yield_monent, 0)
+END_PROC(yieldAtMonitorEnter)
+
 BEGIN_FUNC(executeCurrentBytecodeFromJIT)
     CINTERP(J9TR_bcloop_execute_bytecode, 0)
 END_CURRENT

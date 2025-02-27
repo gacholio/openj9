@@ -918,7 +918,7 @@ END_PROC(jitDecompileAfterMonitorEnter)
 START_PROC(yieldAtMonitorEnter)
 	mov uword ptr J9TR_VMThread_returnValue[_rbp],J9TR_bcloop_yield_monent
 	CINTERP
-END_PROC(executeCurrentBytecodeFromJIT)
+END_PROC(yieldAtMonitorEnter)
 
 START_PROC(executeCurrentBytecodeFromJIT)
 	mov uword ptr J9TR_VMThread_returnValue[_rbp],J9TR_bcloop_execute_bytecode

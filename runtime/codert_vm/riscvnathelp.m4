@@ -775,6 +775,10 @@ START_PROC(jitDecompileAfterMonitorEnter)
     BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileAfterMonitorEnter)
 
+START_PROC(yieldAtMonitorEnter)
+	CINTERP(J9TR_bcloop_yield_monent, 0)
+END_PROC(yieldAtMonitorEnter)
+
 START_PROC(executeCurrentBytecodeFromJIT)
     CINTERP(J9TR_bcloop_execute_bytecode, 0)
 END_PROC(executeCurrentBytecodeFromJIT)
