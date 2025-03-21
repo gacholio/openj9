@@ -145,6 +145,17 @@ jniNativeMethodProperties(J9VMThread *currentThread, J9Method *jniNativeMethod, 
 						UDATA entryLength = methodDescriptor->methodNameLength;
 						if (J9UTF8_DATA_EQUALS(methodNameData, methodNameLength, entryData, entryLength)) {
 found:
+#if JAVA_SPEC_VERSION >= 24
+							/* Fast implementation located - if wait can unmount the continuation, check to see if this
+							 * native is the wait implememnation and reject it if so.
+							 */
+							if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
+							&& J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "waitImpl")
+							&& J9UTF8_LITERAL_EQUALS(methodSignature, methodSignatureLength, "(JI)V")) {
+								goto done;
+							}
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 							address = methodDescriptor->function;
 							flags = methodDescriptor->flags;
 							Trc_VM_fastJNINativeFound(
