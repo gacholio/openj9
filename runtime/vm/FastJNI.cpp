@@ -223,6 +223,20 @@ found:
 		}
 	}
 done:
+#if JAVA_SPEC_VERSION >= 24
+	if (NULL != address) {
+		/* Fast implementation located - if wait can unmount the continuation, check to see if this
+		 * native is the wait implememnation and reject it if so.
+		 */
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+			if (J9UTF8_LITERAL_EQUALS_UTF8(J9ROMMETHOD_NAME(romMethod), "waitImpl") && J9UTF8_LITERAL_EQUALS_UTF8(J9ROMMETHOD_SIGNATURE(romMethod), "(JI)V")) {
+				flags = 0;
+				address = NULL;
+			}
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	*properties = flags;
 	return address;
 }
