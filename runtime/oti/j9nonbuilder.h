@@ -1135,6 +1135,11 @@ typedef struct J9CudaGlobals {
 	jmethodID runnable_run;
 } J9CudaGlobals;
 
+typedef struct J9LocalmapCacheEntry {
+	U_64 bits;
+	void *key;
+} J9LocalmapCacheEntry;
+
 #if defined(J9VM_OPT_SHARED_CLASSES)
 
 typedef enum J9SharedClassCacheMode {
@@ -3709,20 +3714,25 @@ typedef struct J9ClassLoader {
 	omrthread_rwmutex_t cpEntriesMutex;
 	UDATA initClassPathEntryCount;
 	UDATA asyncGetCallTraceUsed;
+	omrthread_monitor_t mapCacheMutex;
+	struct J9HashTable* localmapCache;
+	struct J9HashTable* argBitsCache;
 #if defined(J9VM_OPT_JFR)
 	J9HashTable *typeIDs;
 #endif /* defined(J9VM_OPT_JFR) */
 } J9ClassLoader;
 
-#define J9CLASSLOADER_SHARED_CLASSES_ENABLED  8
-#define J9CLASSLOADER_SUBSET_VISIBILITY  64
-#define J9CLASSLOADER_PARALLEL_CAPABLE  0x100
-#define J9CLASSLOADER_ANON_CLASS_LOADER  0x400
-#define J9CLASSLOADER_CONTAINS_METHODS_PRESENT_IN_MCC_HASH  32
-#define J9CLASSLOADER_CONTAINS_JXES  1
-#define J9CLASSLOADER_INVARIANTS_SHARABLE  4
-#define J9CLASSLOADER_CLASSPATH_SET  2
-#define J9CLASSLOADER_CONTAINS_JITTED_METHODS  16
+#define J9CLASSLOADER_CONTAINS_JXES 0x1
+#define J9CLASSLOADER_CLASSPATH_SET 0x2
+#define J9CLASSLOADER_INVARIANTS_SHARABLE 0x4
+#define J9CLASSLOADER_SHARED_CLASSES_ENABLED 0x8
+#define J9CLASSLOADER_CONTAINS_JITTED_METHODS 0x10
+#define J9CLASSLOADER_CONTAINS_METHODS_PRESENT_IN_MCC_HASH 0x20
+#define J9CLASSLOADER_SUBSET_VISIBILITY 0x40
+#define J9CLASSLOADER_UNUSED_0x80 0x80
+#define J9CLASSLOADER_PARALLEL_CAPABLE 0x100
+#define J9CLASSLOADER_UNUSED_0x200 0x200
+#define J9CLASSLOADER_ANON_CLASS_LOADER 0x400
 
 #define J9CLASSLOADER_CLASSLOADEROBJECT(currentThread, object) J9VMTHREAD_JAVAVM(currentThread)->memoryManagerFunctions->j9gc_objaccess_readObjectFromInternalVMSlot((currentThread), J9VMTHREAD_JAVAVM(currentThread), (j9object_t*)&((object)->classLoaderObject))
 #define J9CLASSLOADER_SET_CLASSLOADEROBJECT(currentThread, object, value) J9VMTHREAD_JAVAVM(currentThread)->memoryManagerFunctions->j9gc_objaccess_storeObjectToInternalVMSlot((currentThread), (j9object_t*)&((object)->classLoaderObject), (value))

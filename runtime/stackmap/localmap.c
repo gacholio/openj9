@@ -418,6 +418,8 @@ _nextBranch:
 void
 j9localmap_ArgBitsForPC0 (J9ROMClass * romClass, J9ROMMethod * romMethod, U_32 * resultArrayBase) 
 {
+	U_8 argCount = romMethod->argCount;
+			
 	argBitsFromSignature(
 		J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)),
 		resultArrayBase,
