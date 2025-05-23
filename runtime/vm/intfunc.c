@@ -275,7 +275,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	resolveVirtualMethodRefInto,
 	findObjectDeadlockedThreads,
 	findROMClassFromPC,
-	j9localmap_LocalBitsForPC,
 	fillInDgRasInterface,
 	rasStartDeferredThreads,
 	initJVMRI,

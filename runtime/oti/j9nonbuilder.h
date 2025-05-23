@@ -5202,7 +5202,6 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *resolveVirtualMethodRefInto)(struct J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpIndex, UDATA resolveFlags, struct J9Method **resolvedMethod, struct J9RAMVirtualMethodRef *ramCPEntry) ;
 	IDATA  ( *findObjectDeadlockedThreads)(struct J9VMThread *currentThread, j9object_t **pDeadlockedThreads, j9object_t **pBlockingObjects, UDATA flags) ;
 	struct J9ROMClass*  ( *findROMClassFromPC)(struct J9VMThread *vmThread, UDATA methodPC, struct J9ClassLoader **resultClassLoader) ;
-	IDATA  ( *j9localmap_LocalBitsForPC)(struct J9PortLibrary * portLib, struct J9ROMClass * romClass, struct J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData)) ;
 	int  ( *fillInDgRasInterface)(struct DgRasInterface *dri) ;
 	void  ( *rasStartDeferredThreads)(struct J9JavaVM* vm) ;
 	int  ( *initJVMRI)(struct J9JavaVM* vm) ;
@@ -6254,7 +6253,7 @@ typedef struct J9JavaVM {
 	struct J9HashTable* fieldIndexTable;
 	UDATA fieldIndexThreshold;
 	omrthread_monitor_t fieldIndexMutex;
-	IDATA  ( *localMapFunction)(struct J9PortLibrary * portLib, struct J9ROMClass * romClass, struct J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData)) ;
+	IDATA  ( *localMapFunction)(struct J9PortLibrary * portLib, struct J9ROMClass * romClass, struct J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData), J9ClassLoader * classLoasder) ;
 	UDATA realtimeHeapMapBasePageRounded;
 	UDATA* realtimeHeapMapBits;
 	struct J9VMGCSizeClasses *realtimeSizeClasses;

@@ -753,11 +753,12 @@ walkMethodFrame(J9StackWalkState * walkState)
 			if (walkState->argCount) {
 				/* Max size as argCount always <= 255 */
 				U_32 result[8];
+				J9Class *ramClass = UNTAGGED_METHOD_CP(walkState->method)->ramClass;
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 				swPrintf(walkState, 4, "\tUsing signature mapper\n");
 #endif
-				j9localmap_ArgBitsForPC0(UNTAGGED_METHOD_CP(walkState->method)->ramClass->romClass, romMethod, result);
+				j9localmap_ArgBitsForPC0(ramClass->romClass, romMethod, result, ramClass->classLoader);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 				swPrintf(walkState, 4, "\tArguments starting at %p for %d slots\n", walkState->arg0EA, walkState->argCount);
@@ -1520,7 +1521,8 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 
 			memset(result, 0, ((argTempCount + 31) / 32) * sizeof(U_32));
 
-			j9localmap_ArgBitsForPC0(romClass, romMethod, result);
+			/* getLocalsMap is always called with ROM artifacts derived from the walkState->method */
+			j9localmap_ArgBitsForPC0(romClass, romMethod, result, J9_CLASS_FROM_METHOD(walkState->method)->classLoader);
 			return;
 		}
 	}
@@ -1528,7 +1530,7 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	swPrintf(walkState, 4, "\tUsing local mapper\n");
 #endif
-	errorCode = vm->localMapFunction(PORTLIB, romClass, romMethod, offsetPC, result, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
+	errorCode = vm->localMapFunction(PORTLIB, romClass, romMethod, offsetPC, result, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer, J9_CLASS_FROM_METHOD(walkState->method)->classLoader);
 
 	if (errorCode < 0) {
 		if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {

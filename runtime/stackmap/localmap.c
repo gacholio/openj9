@@ -416,7 +416,7 @@ _nextBranch:
 */
 
 void
-j9localmap_ArgBitsForPC0 (J9ROMClass * romClass, J9ROMMethod * romMethod, U_32 * resultArrayBase) 
+j9localmap_ArgBitsForPC0 (J9ROMClass * romClass, J9ROMMethod * romMethod, U_32 * resultArrayBase, J9ClassLoader *classLoader) 
 {
 	U_8 argCount = romMethod->argCount;
 			
@@ -433,7 +433,8 @@ IDATA
 j9localmap_LocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, 
 							void * userData, 
 							UDATA * (* getBuffer) (void * userData), 
-							void (* releaseBuffer) (void * userData)) 
+							void (* releaseBuffer) (void * userData),
+							J9ClassLoader * classLoader) 
 {
 
 	PORT_ACCESS_FROM_PORT(portLib);

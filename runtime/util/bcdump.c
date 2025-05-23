@@ -124,13 +124,13 @@ IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 				switch (j) {
 				case LOCAL_MAP:
 					result = j9localmap_LocalBitsForPC(portLib, romClass, romMethod, pc, resultArray,
-					                NULL, NULL, NULL);
+					                NULL, NULL, NULL, NULL);
 					mapChar = 'l';
 					outputCount = localsCount;
 					break;
 				case DEBUG_MAP:
 					result = j9localmap_DebugLocalBitsForPC(portLib, romClass, romMethod, pc, resultArray,
-					                NULL, NULL, NULL);
+					                NULL, NULL, NULL, NULL);
 					mapChar = 'd';
 					outputCount = localsCount;
 					break;

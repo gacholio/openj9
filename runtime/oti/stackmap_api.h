@@ -107,12 +107,14 @@ getReturnBytecode(J9ROMClass *romClass, J9ROMMethod * romMethod, UDATA * returnS
 
 /**
 * @brief
+* @param romClass
 * @param romMethod
 * @param resultArrayBase
+* @param classLoader
 * @return void
 */
 void
-j9localmap_ArgBitsForPC0 (J9ROMClass * romClass, J9ROMMethod * romMethod, U_32 * resultArrayBase);
+j9localmap_ArgBitsForPC0 (J9ROMClass * romClass, J9ROMMethod * romMethod, U_32 * resultArrayBase, J9ClassLoader *classLoader);
 
 
 /**
@@ -125,11 +127,12 @@ j9localmap_ArgBitsForPC0 (J9ROMClass * romClass, J9ROMMethod * romMethod, U_32 *
 * @param userData
 * @param getBuffer function
 * @param releaseBuffer function
+* @param classLoader
 * @return IDATA
 */
 IDATA
 j9localmap_LocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, 
-		void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData));
+		void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData), J9ClassLoader * classLoader);
 
 
 /* ---------------- debuglocalmap.c ---------------- */
@@ -144,11 +147,12 @@ j9localmap_LocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMM
 * @param userData
 * @param getBuffer function
 * @param releaseBuffer function
+* @param classLoader
 * @return IDATA
 */
 IDATA
 j9localmap_DebugLocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase, 
-		void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData)); 
+		void * userData, UDATA * (* getBuffer) (void * userData), void (* releaseBuffer) (void * userData), J9ClassLoader * classLoader); 
 
 
 /**

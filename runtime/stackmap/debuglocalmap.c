@@ -507,7 +507,8 @@ IDATA
 j9localmap_DebugLocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase,
 								void * userData, 
 								UDATA * (* getBuffer) (void * userData), 
-								void (* releaseBuffer) (void * userData)) 
+								void (* releaseBuffer) (void * userData),
+								J9ClassLoader * classLoader) 
 {
 
 	PORT_ACCESS_FROM_PORT(portLib);
@@ -651,7 +652,7 @@ validateLocalSlot(J9VMThread *currentThread, J9Method *ramMethod, U_32 offsetPC,
 			}
 		}
 
-		mapRC = j9localmap_DebugLocalBitsForPC(PORTLIB, romClass, romMethod, offsetPC, localMap, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
+		mapRC = j9localmap_DebugLocalBitsForPC(PORTLIB, romClass, romMethod, offsetPC, localMap, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer, NULL);
 		if (mapRC < 0) {
 			switch (mapRC) {
 				case BCT_ERR_OUT_OF_MEMORY:

@@ -355,11 +355,12 @@ static UDATA growFrameIterator(J9VMThread * vmThread, J9StackWalkState * walkSta
 						U_32 *descriptionSlots = argBits;
 						UDATA descriptionBitsRemaining = 0;
 						U_32 description = 0;
-						J9ROMClass *romClass = J9_CLASS_FROM_METHOD(nativeMethod)->romClass;
+						J9Class *ramClass = J9_CLASS_FROM_METHOD(nativeMethod);
+						J9ROMClass *romClass = ramClass->romClass;
 						J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod);
 						UDATA * argPtr = walkState->arg0EA;
 
-						j9localmap_ArgBitsForPC0(romClass, romMethod, descriptionSlots);
+						j9localmap_ArgBitsForPC0(romClass, romMethod, descriptionSlots, ramClass->classLoader);
 						while (argPtr != walkState->bp) {
 							if (0 == descriptionBitsRemaining) {
 								description = *descriptionSlots++;
