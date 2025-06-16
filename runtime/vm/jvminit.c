@@ -3821,6 +3821,8 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	}
 	vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_UTF_CACHE; /* Enable UTF cache by default */
 
+	vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_CACHE_MAPS; /* !!! remove */
+
 	{
 		IDATA noDynamicAgentLoading = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOENABLEDYNAMICAGENTLOADING, NULL);
 		IDATA dynamicAgentLoading = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEDYNAMICAGENTLOADING, NULL);
