@@ -79,6 +79,10 @@ freeMapCaches(J9ClassLoader *classLoader)
 		hashTableFree(classLoader->stackmapCache);
 		classLoader->stackmapCache = NULL;
 	}
+	if (NULL != classLoader->argTempCache) {
+		hashTableFree(classLoader->argTempCache);
+		classLoader->argTempCache = NULL;
+	}
 }
 
 static void
