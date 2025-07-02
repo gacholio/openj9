@@ -83,7 +83,7 @@ checkCache(J9JavaVM *vm, J9ClassLoader *classLoader, void *key, J9HashTable *map
 				J9MapCacheEntry *entry = (J9MapCacheEntry*)hashTableFind(mapCache, &exemplar);
 
 				if (NULL != entry) {
-					memcpy(resultArrayBase, entry->data, sizeof(U_32) * mapWords);
+					memcpy(resultArrayBase, &entry->data, sizeof(U_32) * mapWords);
 					found = true;
 				}
 			}
@@ -135,7 +135,7 @@ updateCache(J9JavaVM *vm, J9ClassLoader *classLoader, void *key, J9HashTable **c
 			if (NULL != mapCache) {
 				J9MapCacheEntry entry = { 0 };
 				entry.key = key;
-				memcpy(entry.data, resultArrayBase, sizeof(U_32) * mapWords);
+				memcpy(&entry.data, resultArrayBase, sizeof(U_32) * mapWords);
 				hashTableAdd(mapCache, &entry);
 			}
 

@@ -1154,8 +1154,8 @@ typedef struct J9MapCacheEntry {
 	void *key;
 	union {
 		struct {
-			U_8 argCount;
 			U_16 tempCount;
+			U_8 argCount;
 		} argTemp;
 		U_32 bits[J9_MAP_CACHE_SLOTS];
 	} data;
