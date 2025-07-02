@@ -201,7 +201,7 @@ j9cached_LocalBitsForPC(J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc
 	return rc;
 }
 
-j9cached_argTempsFromROMMethod(J9ROMMethod *romMethod, J9ClassLoader *classLoader. U_8 *argCount, U_16 *tempCount)
+j9cached_argTempsFromROMMethod(J9ROMMethod *romMethod, J9ClassLoader *classLoader, U_8 *argCount, U_16 *tempCount)
 {
 	J9MapCacheEntry cacheEntry = { 0 };
 
