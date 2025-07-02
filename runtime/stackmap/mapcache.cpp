@@ -210,8 +210,8 @@ j9cached_argTempsFromROMMethod(J9ROMMethod * romMethod, U_8 *argCount, U_16 *tem
 	if (!checkCache(vm, classLoader, romMethod, classLoader->argTempCache, (U_32*)&cacheEntry, 1)) {
 		/* Cache miss - fetch the counts and attempt to cache the result */
 		cacheEntry.key = romMethod;
-		cacheEntry.argTemp.argCount = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod);
-		cacheEntry.argTemp.tempCount = J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod);
+		cacheEntry.data.argTemp.argCount = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod);
+		cacheEntry.data.argTemp.tempCount = J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod);
 		updateCache(vm, classLoader, romMethod, &classLoader->argTempCache, (U_32*)&cacheEntry, 1);
 	}
 
