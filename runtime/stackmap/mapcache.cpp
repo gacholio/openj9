@@ -201,7 +201,7 @@ j9cached_LocalBitsForPC(J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc
 	return rc;
 }
 
-void
+v
 j9cached_argTempsFromROMMethod(J9ROMMethod * romMethod, U_8 *argCount, U_16 *tempCount,
 								J9JavaVM *vm, J9ClassLoader * classLoader)
 {
@@ -215,8 +215,8 @@ j9cached_argTempsFromROMMethod(J9ROMMethod * romMethod, U_8 *argCount, U_16 *tem
 		updateCache(vm, classLoader, romMethod, &classLoader->argTempCache, (U_32*)&cacheEntry, 1);
 	}
 
-	*argCount = cacheEntry.argTemp.argCount;
-	*tempCount = cacheEntry.argTemp.tempCount;
+	*argCount = cacheEntry.data.argTemp.argCount;
+	*tempCount = cacheEntry.data.argTemp.tempCount;
 }
 
 } /* extern "C" */
