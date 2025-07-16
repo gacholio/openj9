@@ -202,7 +202,7 @@ j9cached_LocalBitsForPC(J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc
 }
 
 void
-j9cached_romMethodInfosFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9ClassLoader *classLoader, J9CachedROMMethodInfo *romMethodImfo)
+j9cached_romMethodInfosFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9ClassLoader *classLoader, J9CachedROMMethodInfo *romMethodInfo)
 {
 	J9MapCacheEntry cacheEntry = { 0 };
 
