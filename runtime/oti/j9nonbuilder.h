@@ -1150,7 +1150,7 @@ typedef struct J9CudaGlobals {
 
 #define J9_MAP_CACHE_SLOTS 2
 
-typdef struct J9CachedROMMethodInfo {
+typedef struct J9CachedROMMethodInfo {
 	U_32 modifiers;
 	U_16 tempCount;
 	U_8 argCount;
