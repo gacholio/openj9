@@ -79,6 +79,10 @@ freeMapCaches(J9ClassLoader *classLoader)
 		hashTableFree(classLoader->stackmapCache);
 		classLoader->stackmapCache = NULL;
 	}
+	if (NULL != classLoader->romMethodInfoCache) {
+		hashTableFree(classLoader->romMethodInfoCache);
+		classLoader->romMethodInfoCache = NULL;
+	}
 }
 
 static void
