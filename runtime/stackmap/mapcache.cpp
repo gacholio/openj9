@@ -83,7 +83,7 @@ checkCache(J9JavaVM *vm, J9ClassLoader *classLoader, void *key, J9HashTable *map
 				J9MapCacheEntry *entry = (J9MapCacheEntry*)hashTableFind(mapCache, &exemplar);
 
 				if (NULL != entry) {
-					memcpy(resultArrayBase, entry->bits, sizeof(U_32) * mapWords);
+					memcpy(resultArrayBase, &entry->data.bits, sizeof(U_32) * mapWords);
 					found = true;
 				}
 			}
@@ -135,7 +135,7 @@ updateCache(J9JavaVM *vm, J9ClassLoader *classLoader, void *key, J9HashTable **c
 			if (NULL != mapCache) {
 				J9MapCacheEntry entry = { 0 };
 				entry.key = key;
-				memcpy(entry.bits, resultArrayBase, sizeof(U_32) * mapWords);
+				memcpy(&entry.data.bits, resultArrayBase, sizeof(U_32) * mapWords);
 				hashTableAdd(mapCache, &entry);
 			}
 
@@ -199,6 +199,25 @@ j9cached_LocalBitsForPC(J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc
 	}
 
 	return rc;
+}
+
+void
+j9cached_romMethodInfosFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9ClassLoader *classLoader, J9CachedROMMethodInfo *romMethodInfo)
+{
+	J9MapCacheEntry cacheEntry = { 0 };
+
+	if (!checkCache(vm, classLoader, romMethod, classLoader->romMethodInfoCache, (U_32*)&cacheEntry, 1)) {
+		/* Cache miss - fetch the counts and attempt to cache the result */
+		cacheEntry.key = romMethod;
+		cacheEntry.data.romMethodInfo.argCount = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod);
+		cacheEntry.data.romMethodInfo.tempCount = J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod);
+		cacheEntry.data.romMethodInfo.modifiers = romMethod->modifiers;
+		updateCache(vm, classLoader, romMethod, &classLoader->romMethodInfoCache, (U_32*)&cacheEntry, 1);
+	}
+
+	romMethodInfo->argCount = cacheEntry.data.romMethodInfo.argCount;
+	romMethodInfo->tempCount = cacheEntry.data.romMethodInfo.tempCount;
+	romMethodInfo->modifiers = cacheEntry.data.romMethodInfo.modifiers;
 }
 
 } /* extern "C" */
