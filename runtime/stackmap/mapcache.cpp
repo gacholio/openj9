@@ -25,6 +25,49 @@
 
 extern "C" {
 
+void
+populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethodInfo *romMethodInfo, void *key)
+{
+	memset(romMethodInfo, 0, sizeof(*romMethodInfo));
+	bool found = false;
+	J9Method *method = walkState->method;
+	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
+	omrthread_monitor_t mapCacheMutex = classLoader->mapCacheMutex;
+
+	/* If the mapCacheMutex exists, the caching feature is enabled */
+	if (NULL != mapCacheMutex) {
+		omrthread_monitor_enter(mapCacheMutex);
+		J9HashTable *mapCache = classLoader->romMethodInfoCache;
+
+		/* If the cache exists, check it for this key */
+		if (NULL != mapCache) {
+			J9ROMMethodInfo exemplar = { 0 };
+			exemplar.key = key;
+			J9ROMMethodInfo *entry = (J9ROMMethodInfo*)hashTableFind(mapCache, &exemplar);
+
+			if (NULL != entry) {
+				/* Cache hit - copy the info */
+				*romMethodInfo = *entry;
+			} else {
+				/* Cache miss - populate the info and cache it */
+				J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+				romMethodInfo->argCount = romMethod->argCount;
+				romMethodInfo->tempCount = romMethod->tempCount;
+				romMethodInfo->modifiers = romMethod->modifiers;
+			}
+		}
+
+		omrthread_monitor_exit(mapCacheMutex);
+	} else {
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+		romMethodInfo->argCount = romMethod->argCount;
+		romMethodInfo->tempCount = romMethod->tempCount;
+		romMethodInfo->modifiers = romMethod->modifiers;
+	}
+}
+
+#if 0
+
 /**
  * @brief Map cache hash function
  * @param key J9MapCacheEntry pointer
@@ -83,7 +126,7 @@ checkCache(J9JavaVM *vm, J9ClassLoader *classLoader, void *key, J9HashTable *map
 				J9MapCacheEntry *entry = (J9MapCacheEntry*)hashTableFind(mapCache, &exemplar);
 
 				if (NULL != entry) {
-					memcpy(resultArrayBase, entry->bits, sizeof(U_32) * mapWords);
+					memcpy(resultArrayBase, &entry->data.bits, sizeof(U_32) * mapWords);
 					found = true;
 				}
 			}
@@ -135,7 +178,7 @@ updateCache(J9JavaVM *vm, J9ClassLoader *classLoader, void *key, J9HashTable **c
 			if (NULL != mapCache) {
 				J9MapCacheEntry entry = { 0 };
 				entry.key = key;
-				memcpy(entry.bits, resultArrayBase, sizeof(U_32) * mapWords);
+				memcpy(&entry.data.bits, resultArrayBase, sizeof(U_32) * mapWords);
 				hashTableAdd(mapCache, &entry);
 			}
 
@@ -200,5 +243,8 @@ j9cached_LocalBitsForPC(J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc
 
 	return rc;
 }
+
+#endif
+
 
 } /* extern "C" */
