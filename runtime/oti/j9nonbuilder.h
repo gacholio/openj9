@@ -1137,12 +1137,24 @@ typedef struct J9CudaGlobals {
 	jmethodID runnable_run;
 } J9CudaGlobals;
 
-#define J9_MAP_CACHE_SLOTS 2
+#define J9_STACKMAP_CACHE_SLOTS 2
+#define J9_LOCALMAP_CACHE_SLOTS 2
+#define J9_ARGBITS_CACHE_SLOTS 2
 
-typedef struct J9MapCacheEntry {
+#define J9MAPCACHE_STACKMAP_CACHED 1
+#define J9MAPCACHE_LOCALMAP_CACHED 2
+#define J9MAPCACHE_ARGBITS_CACHED 4
+
+typedef struct J9ROMMethodInfo {
 	void *key;
-	U_32 bits[J9_MAP_CACHE_SLOTS];
-} J9MapCacheEntry;
+	U_32 stackmap[J9_STACKMAP_CACHE_SLOTS];
+	U_32 localmap[J9_ARGBITS_CACHE_SLOTS];
+	U_32 argbits[J9_ARGBITS_CACHE_SLOTS];
+	U_32 flags;
+	U_32 modifiers;
+	U_16 tempCount;
+	U_8 argCount;
+} J9ROMMethodInfo;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 
@@ -3719,9 +3731,7 @@ typedef struct J9ClassLoader {
 	UDATA initClassPathEntryCount;
 	UDATA asyncGetCallTraceUsed;
 	omrthread_monitor_t mapCacheMutex;
-	struct J9HashTable* localmapCache;
-	struct J9HashTable* argsbitsCache;
-	struct J9HashTable* stackmapCache;
+	struct J9HashTable* romMethodInfoCache;
 #if defined(J9VM_OPT_JFR)
 	J9HashTable *typeIDs;
 #endif /* defined(J9VM_OPT_JFR) */
@@ -5303,7 +5313,7 @@ typedef struct J9InternalVMFunctions {
 	void  ( *javaAndCStacksMustBeInSync)(struct J9VMThread * vmThread, BOOLEAN fromJIT) ;
 #endif /* defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT) */
 	struct J9Class*  ( *findFieldSignatureClass)(struct J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA fieldRefCpIndex) ;
-	void  ( *walkBytecodeFrameSlots)(J9StackWalkState *walkState, struct J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap) ;
+	void  ( *walkBytecodeFrameSlots)(J9StackWalkState *walkState, struct J9Method *method, J9ROMMethodInfo *romMethodInfo, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap) ;
 	void*  ( *jniNativeMethodProperties)(struct J9VMThread *currentThread, struct J9Method *jniNativeMethod, UDATA *properties) ;
 	void  ( *invalidJITReturnAddress)(J9StackWalkState *walkState) ;
 	struct J9ClassLoader*  ( *internalAllocateClassLoader)(struct J9JavaVM *javaVM, j9object_t classLoaderObject) ;

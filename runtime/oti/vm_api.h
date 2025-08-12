@@ -3917,6 +3917,7 @@ invalidJITReturnAddress(J9StackWalkState *walkState);
  *
  * @param[in] *walkState current J9StackWalkState pointer
  * @param[in] *method method whose slots are being walked
+ * @param[in] romMethodInfo J9ROMMethodInfo for the method
  * @param[in] offsetPC index into the bytecode array
  * @param[in] *pendingBase highest-memory pending slot pointer
  * @param[in] pendingStackHeight number of pending slots to walk
@@ -3925,7 +3926,7 @@ invalidJITReturnAddress(J9StackWalkState *walkState);
  * @param[in] alwaysLocalMap TRUE to force use of the local mapper, FALSE to use normal walkState logic
  */
 void
-walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap);
+walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, J9ROMMethodInfo *romMethodInfo, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap);
 
 
 /* ---------------- trace.c ---------------- */

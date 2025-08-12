@@ -1977,6 +1977,7 @@ jitWalkOSRFrame(J9StackWalkState *walkState, J9OSRFrame *osrFrame)
 	UDATA *localSlots = ((UDATA*)(osrFrame + 1)) + maxStack;
 	UDATA *nextFrame = localSlots + numberOfLocals;
 	J9MonitorEnterRecord *enterRecord = osrFrame->monitorEnterRecords;
+	J9ROMMethodInfo romMethodInfo = { 0 };
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	{
@@ -1987,7 +1988,10 @@ jitWalkOSRFrame(J9StackWalkState *walkState, J9OSRFrame *osrFrame)
 		walkState->method = stateMethod;
 	}
 #endif
-	walkBytecodeFrameSlots(walkState, method, offsetPC,
+	romMethodInfo.argCount = J9_ROM_METHOD_FROM_RAM_METHOD(method)->argCount;
+	romMethodInfo.tempCount = J9_ROM_METHOD_FROM_RAM_METHOD(method)->tempCount;
+	romMethodInfo.modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers;
+	walkBytecodeFrameSlots(walkState, method, &romMethodInfo, offsetPC,
 			localSlots - 1, pendingStackHeight,
 			nextFrame - 1, numberOfLocals, TRUE);
 	while (NULL != enterRecord) {
