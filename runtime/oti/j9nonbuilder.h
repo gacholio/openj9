@@ -1135,20 +1135,23 @@ typedef struct J9CudaGlobals {
 	jmethodID runnable_run;
 } J9CudaGlobals;
 
-#define J9_MAP_CACHE_SLOTS 2
+#define J9_STACKMAP_CACHE_SLOTS 2
+#define J9_LOCALMAP_CACHE_SLOTS 2
+#define J9_ARGBITS_CACHE_SLOTS 2
 
-typedef struct J9CachedROMMethodInfo {
-	U_32 modifiers;
-	U_16 tempCount;
-	U_8 argCount;
-} J9CachedROMMethodInfo;
+#define J9MAPCACHE_STACKMAP_CACHED 1
+#define J9MAPCACHE_LOCALMAP_CACHED 2
+#define J9MAPCACHE_ARGBITS_CACHED 4
 
 typedef struct J9MapCacheEntry {
 	void *key;
-	union {
-		J9CachedROMMethodInfo romMethodInfo;
-		U_32 bits[J9_MAP_CACHE_SLOTS];
-	} data;
+	UDATA flags;
+	U_32 stackmap[J9_STACKMAP_CACHE_SLOTS];
+	U_32 localmap[J9_ARGBITS_CACHE_SLOTS];
+	U_32 argbits[J9_ARGBITS_CACHE_SLOTS];
+	U_32 modifiers;
+	U_16 tempCount;
+	U_8 argCount;
 } J9MapCacheEntry;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
