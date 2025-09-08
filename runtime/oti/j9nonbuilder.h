@@ -1146,6 +1146,8 @@ typedef struct J9CudaGlobals {
 #define J9MAPCACHE_ARGBITS_CACHED 4
 #define J9MAPCACHE_METHOD_IS_CONSTRUCTOR 8
 
+#define J9MAPCACHE_VALID 128
+
 typedef struct J9ROMMethodInfo {
 	void *key;
 	U_32 stackmap[J9_STACKMAP_CACHE_SLOTS];
