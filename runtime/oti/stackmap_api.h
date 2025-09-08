@@ -196,6 +196,16 @@ j9stackmap_StackBitsForPC(J9PortLibrary * portLib, UDATA pc, J9ROMClass * romCla
 		UDATA * (* getBuffer) (void * userData), 
 		void (* releaseBuffer) (void * userData));
 
+/* ---------------- mapcache.cpp ---------------- */
+
+/**
+* @brief
+* @param walkState
+* @param romMethod
+*/
+void
+initializeBasicROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod);
+
 #ifdef __cplusplus
 }
 #endif

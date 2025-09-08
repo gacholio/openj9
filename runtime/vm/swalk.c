@@ -84,7 +84,7 @@ static void walkDescribedPushes (J9StackWalkState * walkState, UDATA * highestSl
 static void walkObjectPushes (J9StackWalkState * walkState);
 static void walkPushedJNIRefs (J9StackWalkState * walkState);
 static void getStackMap (J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA offsetPC, UDATA pushCount, U_32 *result);
-static void getLocalsMap (J9StackWalkState * walkState, J9ROMMethodInfo *romMethodInfo, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA offsetPC, U_32 * result, UDATA argTempCount, UDATA alwaysLocalMap);
+static void getLocalsMap (J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA offsetPC, U_32 * result, UDATA argTempCount, UDATA alwaysLocalMap);
 static UDATA allocateCache (J9StackWalkState * walkState);
 static void dropToCurrentFrame (J9StackWalkState * walkState);
 
@@ -489,16 +489,13 @@ UDATA walkFrame(J9StackWalkState * walkState)
 		}
 
 		if (walkState->flags & J9_STACKWALK_HIDE_EXCEPTION_FRAMES) {
-			J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
-
-			if (!(romMethod->modifiers & J9AccStatic)) {
-				if (J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod))[0] == '<') {
-					if (*walkState->arg0EA == (UDATA) walkState->restartException) {
-						return J9_STACKWALK_KEEP_ITERATING;
-					}
+			J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
+			if (J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_METHOD_IS_CONSTRUCTOR)) {
+				if (*walkState->arg0EA == (UDATA) walkState->restartException) {
+					return J9_STACKWALK_KEEP_ITERATING;
 				}
-				walkState->flags &= ~J9_STACKWALK_HIDE_EXCEPTION_FRAMES;
 			}
+			walkState->flags &= ~J9_STACKWALK_HIDE_EXCEPTION_FRAMES;
 		}
 	}
 
@@ -885,10 +882,11 @@ static void walkGenericSpecialFrame(J9StackWalkState * walkState)
 
 
 void
-walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, J9ROMMethodInfo *romMethodInfo, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap)
+walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap)
 {
 	J9JavaVM *vm = walkState->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 	UDATA *bp = localBase - numberOfLocals;
 	U_32 *globalBuffer = NULL;
 	UDATA numberOfMappedLocals = numberOfLocals;
@@ -939,7 +937,7 @@ walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, J9ROMMetho
 			if (J9_ARE_ANY_BITS_SET(flags, J9MAPCACHE_LOCALMAP_CACHED)) {
 				result = romMethodInfo->localmap;
 			} else {
-				getLocalsMap(walkState, romMethodInfo, romClass, romMethod, offsetPC, result, numberOfMappedLocals, alwaysLocalMap);
+				getLocalsMap(walkState, romClass, romMethod, offsetPC, result, numberOfMappedLocals, alwaysLocalMap);
 			}
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 			swPrintf(walkState, 4, "\tLocals starting at %p for %d slots\n", localBase, numberOfMappedLocals);
@@ -1008,7 +1006,10 @@ walkBytecodeFrame(J9StackWalkState * walkState)
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 		UDATA argTempCount = 0;
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
+		J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 
+		initializeBasicROMMethodInfo(walkState, romMethod);
+		
 		walkState->constantPool = UNTAGGED_METHOD_CP(walkState->method);
 
 #if defined(J9VM_OPT_METHOD_HANDLE)
@@ -1022,10 +1023,10 @@ walkBytecodeFrame(J9StackWalkState * walkState)
 		walkState->bytecodePCOffset = walkState->pc - (U_8 *) J9_BYTECODE_START_FROM_RAM_METHOD(walkState->method);
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
-		walkState->argCount = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod);
-		argTempCount = J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod) + walkState->argCount;
+		walkState->argCount = romMethodInfo->argCount;
+		argTempCount = romMethodInfo->tempCount + walkState->argCount;
 		walkState->bp = walkState->arg0EA - argTempCount;
-		if (romMethod->modifiers & J9AccSynchronized) {
+		if (romMethodInfo->modifiers & J9AccSynchronized) {
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 			lswRecordSlot(walkState, walkState->bp, LSW_TYPE_O_SLOT, "Sync Object");
 #endif
@@ -1057,13 +1058,8 @@ walkBytecodeFrame(J9StackWalkState * walkState)
 #endif
 
 		if (walkState->flags & J9_STACKWALK_ITERATE_O_SLOTS) {
-			J9ROMMethodInfo romMethodInfo = { 0 };
-			romMethodInfo.argCount = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->argCount;
-			romMethodInfo.tempCount = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->tempCount;
-			romMethodInfo.modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers;
-
 			WALK_METHOD_CLASS(walkState);
-			walkBytecodeFrameSlots(walkState, walkState->method, &romMethodInfo,
+			walkBytecodeFrameSlots(walkState, walkState->method,
 					walkState->bytecodePCOffset, walkState->unwindSP - 1, walkState->unwindSP - walkState->walkSP,
 					walkState->arg0EA, argTempCount, FALSE);
 		}
@@ -1525,10 +1521,11 @@ static void emptySniffAndWhackIterator(J9VMThread * currentThread, J9StackWalkSt
 
 
 static void 
-getLocalsMap(J9StackWalkState * walkState, J9ROMMethodInfo *romMethodInfo, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA offsetPC, U_32 * result, UDATA argTempCount, UDATA alwaysLocalMap)
+getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA offsetPC, U_32 * result, UDATA argTempCount, UDATA alwaysLocalMap)
 {
 	PORT_ACCESS_FROM_WALKSTATE(walkState);
 	J9JavaVM *vm = walkState->walkThread->javaVM;
+	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 	UDATA copySize = ((argTempCount + 31) / 32) * sizeof(U_32);
 
 	if (!alwaysLocalMap) {

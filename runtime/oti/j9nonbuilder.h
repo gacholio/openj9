@@ -1144,6 +1144,7 @@ typedef struct J9CudaGlobals {
 #define J9MAPCACHE_STACKMAP_CACHED 1
 #define J9MAPCACHE_LOCALMAP_CACHED 2
 #define J9MAPCACHE_ARGBITS_CACHED 4
+#define J9MAPCACHE_METHOD_IS_CONSTRUCTOR 8
 
 typedef struct J9ROMMethodInfo {
 	void *key;
@@ -1154,6 +1155,8 @@ typedef struct J9ROMMethodInfo {
 	U_32 modifiers;
 	U_16 tempCount;
 	U_8 argCount;
+	U_8 padTo32;
+	U_32 padTo64;
 } J9ROMMethodInfo;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
@@ -2810,6 +2813,7 @@ typedef struct J9StackWalkState {
 	void* stackMap;
 	void* inlineMap;
 	UDATA loopBreaker;
+	J9ROMMethodInfo romMethodInfo; /* 64-bit aligned */
 	/* The size of J9StackWalkState must be a multiple of 8 because it is inlined into
 	 * J9VMThread where alignment assumotions are being made.
 	 */
@@ -5319,7 +5323,7 @@ typedef struct J9InternalVMFunctions {
 	void  ( *javaAndCStacksMustBeInSync)(struct J9VMThread * vmThread, BOOLEAN fromJIT) ;
 #endif /* defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT) */
 	struct J9Class*  ( *findFieldSignatureClass)(struct J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA fieldRefCpIndex) ;
-	void  ( *walkBytecodeFrameSlots)(J9StackWalkState *walkState, struct J9Method *method, J9ROMMethodInfo *romMethodInfo, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap) ;
+	void  ( *walkBytecodeFrameSlots)(J9StackWalkState *walkState, struct J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap) ;
 	void*  ( *jniNativeMethodProperties)(struct J9VMThread *currentThread, struct J9Method *jniNativeMethod, UDATA *properties) ;
 	void  ( *invalidJITReturnAddress)(J9StackWalkState *walkState) ;
 	struct J9ClassLoader*  ( *internalAllocateClassLoader)(struct J9JavaVM *javaVM, j9object_t classLoaderObject) ;

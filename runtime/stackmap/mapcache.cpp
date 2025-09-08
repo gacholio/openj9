@@ -26,9 +26,25 @@
 extern "C" {
 
 void
-populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethodInfo *romMethodInfo, void *key)
+initializeBasicROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod)
 {
-	memset(romMethodInfo, 0, sizeof(*romMethodInfo));
+	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
+	memset(romMethodInfo, sizeof(*romMethodInfo), 0);
+	romMethodInfo->argCount = romMethod->argCount;
+	romMethodInfo->tempCount = romMethod->tempCount;
+	romMethodInfo->modifiers = romMethod->modifiers;
+	if (!(romMethod->modifiers & J9AccStatic)) {
+		if (J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod))[0] == '<') {
+			romMethodInfo->modifiers |= J9MAPCACHE_METHOD_IS_CONSTRUCTOR;
+		}
+	}
+}
+
+void
+populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void *key)
+{
+	initializeBasicROMMethodInfo(walkState, romMethod);
+#if 0
 	bool found = false;
 	J9Method *method = walkState->method;
 	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
@@ -50,20 +66,12 @@ populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethodInfo *romMethodInf
 				*romMethodInfo = *entry;
 			} else {
 				/* Cache miss - populate the info and cache it */
-				J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-				romMethodInfo->argCount = romMethod->argCount;
-				romMethodInfo->tempCount = romMethod->tempCount;
-				romMethodInfo->modifiers = romMethod->modifiers;
 			}
 		}
 
 		omrthread_monitor_exit(mapCacheMutex);
-	} else {
-		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		romMethodInfo->argCount = romMethod->argCount;
-		romMethodInfo->tempCount = romMethod->tempCount;
-		romMethodInfo->modifiers = romMethod->modifiers;
 	}
+#endif
 }
 
 #if 0
