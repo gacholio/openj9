@@ -33,7 +33,9 @@ initializeBasicROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod
 	romMethodInfo->argCount = romMethod->argCount;
 	romMethodInfo->tempCount = romMethod->tempCount;
 	romMethodInfo->modifiers = romMethod->modifiers;
+#if defined(J9MAPCACHE_DEBUG)
 	romMethodInfo->flags = J9MAPCACHE_VALID;
+#endif /* J9MAPCACHE_DEBUG */
 	if (!(romMethod->modifiers & J9AccStatic)) {
 		if (J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod))[0] == '<') {
 			romMethodInfo->flags |= J9MAPCACHE_METHOD_IS_CONSTRUCTOR;

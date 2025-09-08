@@ -492,7 +492,13 @@ UDATA walkFrame(J9StackWalkState * walkState)
 
 		if (walkState->flags & J9_STACKWALK_HIDE_EXCEPTION_FRAMES) {
 			J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
-			if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) *(UDATA*)-1=-1;
+#if defined(J9MAPCACHE_DEBUG)
+			if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) {
+				PORT_ACCESS_FROM_WALKSTATE(walkState);
+				j9tty_printf(PORTLIB, "\n!!! Invalid ROM: walkFrame\n");
+				*(UDATA*)-1=-1;
+			}
+#endif /* J9MAPCACHE_DEBUG */
 			if (J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_METHOD_IS_CONSTRUCTOR)) {
 				if (*walkState->arg0EA == (UDATA) walkState->restartException) {
 					return J9_STACKWALK_KEEP_ITERATING;
@@ -895,7 +901,13 @@ walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offs
 	U_32 modifiers = romMethodInfo->modifiers;
 	U_32 flags = romMethodInfo->flags;
 
-	if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) *(UDATA*)-1=-1;
+#if defined(J9MAPCACHE_DEBUG)
+	if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) {
+		PORT_ACCESS_FROM_WALKSTATE(walkState);
+		j9tty_printf(PORTLIB, "\n!!! Invalid ROM: walkBytecodeFrameSlots\n");
+		*(UDATA*)-1=-1;
+	}
+#endif /* J9MAPCACHE_DEBUG */
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	swPrintf(walkState, 3, "\tBytecode index = %d\n", offsetPC);
@@ -909,7 +921,7 @@ walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offs
 		walkState->slotIndex = -1;
 		WALK_NAMED_O_SLOT((j9object_t*) (bp + 1), "Sync O-Slot");
 		numberOfMappedLocals -= 1;
-	} else if ((modifiers & (J9AccMethodObjectConstructor | J9AccEmptyMethod)) == J9AccMethodObjectConstructor) {
+	} else if (J9ROMMETHODFIERS_IS_NON_EMPTY_OBJECT_CONSTRUCTOR(modifiers)) {
 		/* Non-empty java.lang.Object.<init> has one hidden temp to hold a copy of the receiver */
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 		swPrintf(walkState, 4, "\tReceiver object for java.lang.Object.<init>\n");
@@ -1532,7 +1544,13 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 	UDATA copySize = ((argTempCount + 31) / 32) * sizeof(U_32);
 
-	if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) *(UDATA*)-1=-1;
+#if defined(J9MAPCACHE_DEBUG)
+	if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) {
+		PORT_ACCESS_FROM_WALKSTATE(walkState);
+		j9tty_printf(PORTLIB, "\n!!! Invalid ROM: walkLocalsMap\n");
+		*(UDATA*)-1=-1;
+	}
+#endif /* J9MAPCACHE_DEBUG */
 
 	if (!alwaysLocalMap) {
 		/*	Detect method entry vs simply executing at PC 0.  If the bytecode frame is invisible (method monitor enter or
