@@ -309,7 +309,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 		walkState->outgoingArgCount = walkState->argCount;
 		walkState->bytecodePCOffset = -1;
 
-		memset(&walkState->romMethodInfo, sizeof(walkState->romMethodInfo), 0);
+		memset(&walkState->romMethodInfo, 0, sizeof(walkState->romMethodInfo);
 
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 		lswFrameNew(vm, walkState, (UDATA)walkState->pc);

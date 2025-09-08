@@ -29,7 +29,7 @@ void
 initializeBasicROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod)
 {
 	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
-	memset(romMethodInfo, sizeof(*romMethodInfo), 0);
+	memset(romMethodInfo, 0, sizeof(*romMethodInfo));
 	romMethodInfo->argCount = romMethod->argCount;
 	romMethodInfo->tempCount = romMethod->tempCount;
 	romMethodInfo->modifiers = romMethod->modifiers;
