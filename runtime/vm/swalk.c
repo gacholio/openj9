@@ -921,7 +921,7 @@ walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offs
 		walkState->slotIndex = -1;
 		WALK_NAMED_O_SLOT((j9object_t*) (bp + 1), "Sync O-Slot");
 		numberOfMappedLocals -= 1;
-	} else if (J9ROMMETHODFIERS_IS_NON_EMPTY_OBJECT_CONSTRUCTOR(modifiers)) {
+	} else if (J9ROMMETHOD_MODIFIERS_IS_NON_EMPTY_OBJECT_CONSTRUCTOR(modifiers)) {
 		/* Non-empty java.lang.Object.<init> has one hidden temp to hold a copy of the receiver */
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 		swPrintf(walkState, 4, "\tReceiver object for java.lang.Object.<init>\n");
