@@ -492,7 +492,7 @@ UDATA walkFrame(J9StackWalkState * walkState)
 
 		if (walkState->flags & J9_STACKWALK_HIDE_EXCEPTION_FRAMES) {
 			J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
-			if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) *(DATA*)-1=-1;
+			if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) *(UDATA*)-1=-1;
 			if (J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_METHOD_IS_CONSTRUCTOR)) {
 				if (*walkState->arg0EA == (UDATA) walkState->restartException) {
 					return J9_STACKWALK_KEEP_ITERATING;
@@ -895,7 +895,7 @@ walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offs
 	U_32 modifiers = romMethodInfo->modifiers;
 	U_32 flags = romMethodInfo->flags;
 
-	if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) *(DATA*)-1=-1;
+	if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) *(UDATA*)-1=-1;
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	swPrintf(walkState, 3, "\tBytecode index = %d\n", offsetPC);
@@ -1532,7 +1532,7 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 	UDATA copySize = ((argTempCount + 31) / 32) * sizeof(U_32);
 
-	if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) *(DATA*)-1=-1;
+	if (!J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_VALID)) *(UDATA*)-1=-1;
 
 	if (!alwaysLocalMap) {
 		/*	Detect method entry vs simply executing at PC 0.  If the bytecode frame is invisible (method monitor enter or
