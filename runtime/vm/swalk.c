@@ -763,7 +763,7 @@ walkMethodFrame(J9StackWalkState * walkState)
 #endif
 
 				if (J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_ARGBITS_CACHED)) {
-					result = romMethodInfo.argbits;
+					result = romMethodInfo->argbits;
 				} else {
 					j9localmap_ArgBitsForPC0(methodClass->romClass, romMethod, result);
 				}
