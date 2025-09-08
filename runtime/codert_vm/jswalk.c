@@ -153,6 +153,8 @@ UDATA  jitWalkStackFrames(J9StackWalkState *walkState)
 	U_8 ** returnTable;
 	void  (*savedDropToCurrentFrame)(struct J9StackWalkState * walkState) ;
 
+	memset(&walkState->romMethodInfo, 0, sizeof(walkState->romMethodInfo));
+
 	if (J9_ARE_ANY_BITS_SET(walkState->flags, J9_STACKWALK_RESUME)) {
 		walkState->flags &= ~J9_STACKWALK_RESUME;
 		if (0 != walkState->inlineDepth) {
@@ -212,6 +214,8 @@ UDATA  jitWalkStackFrames(J9StackWalkState *walkState)
 						lswRecord(walkState, LSW_TYPE_METHOD, walkState->method);
 						lswRecord(walkState, LSW_TYPE_JIT_FRAME_INFO, walkState);
 #endif
+						initializeBasicROMMethodInfo(walkState, J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method));
+
 						if ((rc = walkFrame(walkState)) != J9_STACKWALK_KEEP_ITERATING) {
 							return rc;
 						}
@@ -250,6 +254,7 @@ resumeWalkInline:
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 		lswRecord(walkState, LSW_TYPE_JIT_FRAME_INFO, walkState);
 #endif	 
+		initializeBasicROMMethodInfo(walkState, J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method));
 		if ((rc = walkFrame(walkState)) != J9_STACKWALK_KEEP_ITERATING) {
 			return rc;
 		}
