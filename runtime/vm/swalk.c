@@ -741,14 +741,13 @@ walkMethodFrame(J9StackWalkState * walkState)
 		}
 	}
 	if (walkState->method) {
-		J9ROMMethodInfo romMethodInfo = { 0 };
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
-		romMethodInfo.argCount = romMethod->argCount;
-		romMethodInfo.tempCount = romMethod->tempCount;
-		romMethodInfo.modifiers = romMethod->modifiers;
+		J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
+
+		initializeBasicROMMethodInfo(walkState, romMethod);
 
 		walkState->constantPool = UNTAGGED_METHOD_CP(walkState->method);
-		walkState->argCount = romMethodInfo.argCount;
+		walkState->argCount = romMethodInfo->argCount;
 
 		if (walkState->flags & J9_STACKWALK_ITERATE_O_SLOTS) {
 			WALK_METHOD_CLASS(walkState);
@@ -763,7 +762,7 @@ walkMethodFrame(J9StackWalkState * walkState)
 				swPrintf(walkState, 4, "\tUsing signature mapper\n");
 #endif
 
-				if (J9_ARE_ANY_BITS_SET(romMethodInfo.flags, J9MAPCACHE_ARGBITS_CACHED)) {
+				if (J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_ARGBITS_CACHED)) {
 					result = romMethodInfo.argbits;
 				} else {
 					j9localmap_ArgBitsForPC0(methodClass->romClass, romMethod, result);
