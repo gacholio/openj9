@@ -461,4 +461,6 @@ static_assert((LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) < (size_t)'/'), 
 
 #endif /* defined(J9VM_OPT_JFR) */
 
+#define J9MAPCACHE_DEBUG
+
 #endif /* J9_H */
