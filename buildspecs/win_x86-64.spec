@@ -181,7 +181,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<flag id="jit_dynamicLoopTransfer" value="true"/>
 		<flag id="jit_fullSpeedDebug" value="true"/>
 		<flag id="jit_gcOnResolveSupport" value="true"/>
-		<flag id="jit_newDualHelpers" value="true"/>
+		<flag id="jit_newDualHelpers" value="false"/>
 		<flag id="jit_newInstancePrototype" value="true"/>
 		<flag id="jit_supportsDirectJNI" value="true"/>
 		<flag id="module_algorithm_test" value="true"/>
