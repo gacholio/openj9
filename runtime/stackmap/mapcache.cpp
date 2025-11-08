@@ -43,11 +43,166 @@ initializeBasicROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod
 	}
 }
 
+static UDATA
+romMethodInfoHashFn(void *key, void *userData)
+{
+    J9ROMMethodInfo *entry = (J9ROMMethodInfo *)key;
+    return (UDATA)entry->key;
+}
+
+static UDATA
+romMethodInfoEqualFn(void *leftKey, void *rightKey, void *userData)
+{
+    J9ROMMethodInfo *left = (J9ROMMethodInfo *)leftKey;
+    J9ROMMethodInfo *right = (J9ROMMethodInfo *)rightKey;
+    return (left->key == right->key);
+}
+
+static bool
+checkROMMethodInfoCache(J9ClassLoader *classLoader, void *key, J9ROMMethodInfo *outInfo)
+{
+    bool found = false;
+    omrthread_monitor_t mapCacheMutex = classLoader->mapCacheMutex;
+
+    if (NULL != mapCacheMutex) {
+        omrthread_monitor_enter(mapCacheMutex);
+
+        J9HashTable *cache = classLoader->romMethodInfoCache;
+        if (NULL != cache) {
+            J9ROMMethodInfo exemplar = {0};
+            exemplar.key = key;
+            J9ROMMethodInfo *entry = (J9ROMMethodInfo *)hashTableFind(cache, &exemplar);
+            if (NULL != entry) {
+                *outInfo = *entry; /* Copy struct */
+                found = true;
+            }
+        }
+
+        omrthread_monitor_exit(mapCacheMutex);
+    }
+
+    return found;
+}
+
+static void
+updateROMMethodInfoCache(J9JavaVM *vm, J9ClassLoader *classLoader, J9ROMMethodInfo *info)
+{
+    omrthread_monitor_t mapCacheMutex = classLoader->mapCacheMutex;
+    if (NULL == mapCacheMutex) {
+        return; /* caching disabled */
+    }
+
+    omrthread_monitor_enter(mapCacheMutex);
+
+    J9HashTable *cache = classLoader->romMethodInfoCache;
+    if (NULL == cache) {
+        cache = hashTableNew(
+            OMRPORT_FROM_J9PORT(vm->portLibrary),
+            J9_GET_CALLSITE(),
+            0,
+            sizeof(J9ROMMethodInfo),
+            sizeof(J9ROMMethodInfo *),
+            0,
+            J9MEM_CATEGORY_VM,
+            romMethodInfoHashFn,
+            romMethodInfoEqualFn,
+            NULL,
+            NULL);
+        classLoader->romMethodInfoCache = cache;
+    }
+
+    if (NULL != cache) {
+        hashTableAdd(cache, info);
+    }
+
+    omrthread_monitor_exit(mapCacheMutex);
+}
+
+void
+populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void *key)
+{
+    initializeBasicROMMethodInfo(walkState, romMethod);
+
+    J9Method *method = walkState->method;
+    J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
+    J9JavaVM *vm = walkState->javaVM;
+    J9ROMMethodInfo cachedInfo = {0};
+
+    /* Try to find in cache first */
+    bool found = checkROMMethodInfoCache(classLoader, key, &cachedInfo);
+    if (found) {
+        walkState->romMethodInfo = cachedInfo;
+        return;
+    }
+
+    /* Cache miss — build new info */
+    J9ROMMethodInfo newInfo = {0};
+    newInfo.key = key;
+
+    bool isMethodCase = (key == (void *)romMethod);
+    J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
+
+    /* Always compute argbits */
+    {
+        UDATA argWords = (J9_ARG_COUNT_FROM_ROM_METHOD(romMethod) + 31) >> 5;
+        if (argWords > J9_ARGBITS_CACHE_SLOTS) {
+            argWords = J9_ARGBITS_CACHE_SLOTS;
+        }
+        j9localmap_ArgBitsForPC0(romClass, romMethod, newInfo.argbits);
+    }
+
+    if (!isMethodCase) {
+        /* PC case: compute stack and local maps */
+        UDATA pc = (UDATA)((UDATA)key - (UDATA)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
+
+        /* Stack map */
+        UDATA stackWords = (J9_STACKMAP_CACHE_SLOTS);
+        if (stackWords > J9_STACKMAP_CACHE_SLOTS) {
+            stackWords = J9_STACKMAP_CACHE_SLOTS;
+        }
+        j9stackmap_StackBitsForPC(
+            vm->portLibrary,
+            pc,
+            romClass,
+            romMethod,
+            newInfo.stackmap,
+            stackWords << 5,
+            NULL, NULL, NULL);
+
+        /* Local map */
+        UDATA localWords = (J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod) +
+                            J9_ARG_COUNT_FROM_ROM_METHOD(romMethod) + 31) >> 5;
+        if (localWords > J9_ARGBITS_CACHE_SLOTS) {
+            localWords = J9_ARGBITS_CACHE_SLOTS;
+        }
+        vm->localMapFunction(
+            vm->portLibrary,
+            romClass,
+            romMethod,
+            pc,
+            newInfo.localmap,
+            NULL, NULL, NULL);
+    }
+
+    /* Copy metadata */
+    newInfo.modifiers = romMethod->modifiers;
+    newInfo.argCount = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod);
+    newInfo.tempCount = J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod);
+
+    /* Insert into cache */
+    updateROMMethodInfoCache(vm, classLoader, &newInfo);
+
+    /* Reflect it into the current walkState */
+    walkState->romMethodInfo = newInfo;
+}
+
+
+#if 0
+
 void
 populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void *key)
 {
 	initializeBasicROMMethodInfo(walkState, romMethod);
-#if 0
 	bool found = false;
 	J9Method *method = walkState->method;
 	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
@@ -74,10 +229,8 @@ populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void 
 
 		omrthread_monitor_exit(mapCacheMutex);
 	}
-#endif
 }
 
-#if 0
 
 /**
  * @brief Map cache hash function
