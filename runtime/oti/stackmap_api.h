@@ -206,6 +206,16 @@ j9stackmap_StackBitsForPC(J9PortLibrary * portLib, UDATA pc, J9ROMClass * romCla
 void
 initializeBasicROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod);
 
+/**
+ * Populate ROM method info, including argbits, stackmap, and localmap.
+ *
+ * @param walkState current stack walk state
+ * @param romMethod ROM method pointer
+ * @param key identifying key (method address for method-case, PC for PC-case)
+ */
+void
+populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void *key);
+
 #ifdef __cplusplus
 }
 #endif
