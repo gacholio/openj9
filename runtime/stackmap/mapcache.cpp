@@ -22,7 +22,7 @@
 
 #include "rommeth.h"
 #include "stackmap_api.h"
-
+#include <cinttypes> 
 extern "C" {
 
 void
@@ -126,6 +126,71 @@ populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void 
     J9Method *method = walkState->method;
     J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
     J9JavaVM *vm = walkState->javaVM;
+
+    UDATA codeSize = (UDATA)J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod);
+    void *bytecodeStart = (void*)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
+
+    bool isMethodCase = (key == (void *)romMethod);
+    UDATA pc = 0;
+
+    if (!isMethodCase) {
+        // Compute PC only if key points into bytecode range
+        if ((uintptr_t)key >= (uintptr_t)bytecodeStart &&
+            (uintptr_t)key < (uintptr_t)bytecodeStart + codeSize) {
+            pc = (UDATA)((uintptr_t)key - (uintptr_t)bytecodeStart);
+        } 
+    }
+
+    J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
+    J9ROMMethodInfo newInfo = {0};
+    newInfo.key = key;
+
+    // Always compute argbits
+    j9localmap_ArgBitsForPC0(romClass, romMethod, newInfo.argbits);
+
+    if (!isMethodCase && pc < codeSize) {
+        // Stack map
+        j9stackmap_StackBitsForPC(
+            vm->portLibrary,
+            pc,
+            romClass,
+            romMethod,
+            newInfo.stackmap,
+            J9_STACKMAP_CACHE_SLOTS << 5,
+            NULL, NULL, NULL);
+
+        // Local map
+        vm->localMapFunction(
+            vm->portLibrary,
+            romClass,
+            romMethod,
+            pc,
+            newInfo.localmap,
+            NULL, NULL, NULL);
+    }
+
+    // Copy metadata
+    newInfo.modifiers = romMethod->modifiers;
+    newInfo.argCount = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod);
+    newInfo.tempCount = J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod);
+
+    // Insert into cache
+    updateROMMethodInfoCache(vm, classLoader, &newInfo);
+
+    // Reflect it into the current walkState
+    walkState->romMethodInfo = newInfo;
+}
+
+#if 0
+
+void
+populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void *key)
+{
+    initializeBasicROMMethodInfo(walkState, romMethod);
+
+    J9Method *method = walkState->method;
+    J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
+    J9JavaVM *vm = walkState->javaVM;
     J9ROMMethodInfo cachedInfo = {0};
 
     /* Try to find in cache first */
@@ -154,7 +219,6 @@ populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void 
     if (!isMethodCase) {
         /* PC case: compute stack and local maps */
         UDATA pc = (UDATA)((UDATA)key - (UDATA)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
-
         /* Stack map */
         UDATA stackWords = (J9_STACKMAP_CACHE_SLOTS);
         if (stackWords > J9_STACKMAP_CACHE_SLOTS) {
@@ -196,8 +260,6 @@ populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void 
     walkState->romMethodInfo = newInfo;
 }
 
-
-#if 0
 
 void
 populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void *key)
